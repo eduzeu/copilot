@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user
 from app.services.application_service import create_application, get_application, update_application, delete_application
 from app.services import application_service
 from app.schemas.application import ApplicationCreateRequest, ApplicationUpdateRequest, ApplicationResponse

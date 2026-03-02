@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./career_copilot.db"
     openai_api_key: str = ""
     env: str = 'dev'
+    SECRET_KEY: str 
     access_token_expire_minutes: int = 30
 
     class Config: 

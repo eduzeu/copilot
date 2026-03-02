@@ -1,10 +1,23 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import relationship
-from app.database import Base
+from datetime import datetime
+from sqlalchemy import String, DateTime, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.base import Base
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.application import Application
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    applications = relationship("Application", back_populates="owner")
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    applications: Mapped[list["Application"]] = relationship(
+        back_populates="owner",
+        cascade="all, delete-orphan"
+    )
