@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.application import Application
+    from app.models.resume import Resume
 
 class User(Base):
     __tablename__ = "users"
@@ -21,3 +22,7 @@ class User(Base):
         back_populates="owner",
         cascade="all, delete-orphan"
     )
+    resumes: Mapped[list["Resume"]] = relationship(
+    back_populates="owner",
+    cascade="all, delete-orphan"
+)
