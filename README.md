@@ -1,0 +1,2 @@
+Career Copilot is a full-stack web application that helps software engineering candidates improve their job readiness by combining two tightly integrated features: 1) an AI-powered resume reviewer, and 2) a smart interview coach.
+The platform analyzes a user’s resume against a specific job description, identifies skill gaps and strengths, and then generates a personalized interview practice plan targeting those gaps. Users can practice mock interviews, receive rubric-based feedback, and track their improvement over time.
