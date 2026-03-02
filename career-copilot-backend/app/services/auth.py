@@ -10,7 +10,6 @@ def register_user(request: RegisterRequest, db: Session) -> User:
   if check_user:
     raise HTTPException(status_code=400, detail="Email already registered")
    
-  print("Hashing password:", request.password)
   new_user = User(email=request.email, hashed_password=hash_password(request.password))
   db.add(new_user)
   db.commit()
