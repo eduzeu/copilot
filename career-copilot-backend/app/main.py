@@ -17,3 +17,6 @@ def heath_check():
     return {"status": "ok"}
 
 
+@app.get("/ready")
+def ready_check():
+    return {"status": "ready"}

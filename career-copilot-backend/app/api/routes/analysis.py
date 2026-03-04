@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_current_user
-from app.schemas.analysis import AnalyzeResumeRequest, AnalysisRunOut
+from app.schemas.analysis import AnalyzedResumeRequest, AnalysisRunOut
 from app.services.analysis_service import analyze_resume
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 @router.post("/resume", response_model=AnalysisRunOut)
 def analyze_resume_endpoint(
-    req: AnalyzeResumeRequest,
+    req: AnalyzedResumeRequest,
     db: Session = Depends(get_db),
     user = Depends(get_current_user),
 ):

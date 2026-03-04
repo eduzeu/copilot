@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 
-from app.models.analysis import AnalysisRun, AnalysisBullet
+from app.models.analysis import Analysis, AnalysisBullet
 from app.services.llm_analysis import analyze_bullet_with_stub
 from app.utils.bullets import extract_bullets
 
 def analyze_resume(db: Session, user_id: int, resume_text: str, job_description: str, job_title: str | None):
     bullets = extract_bullets(resume_text)
 
-    run = AnalysisRun(
+    run = Analysis(
         user_id=user_id,
         job_title=job_title,
         job_description=job_description,
