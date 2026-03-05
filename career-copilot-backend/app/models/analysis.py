@@ -35,7 +35,7 @@ class AnalysisBullet(Base):
     __tablename__ = "analysis_bullets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    run_id: Mapped[int] = mapped_column(ForeignKey("analysis_runs.id"), index=True, nullable=False)
+    run_id: Mapped[int] = mapped_column(ForeignKey("analysis.id"), index=True, nullable=False)
 
     bullet_index: Mapped[int] = mapped_column(Integer, nullable=False)
     original_text: Mapped[str] = mapped_column(Text, nullable=False)
