@@ -1,8 +1,9 @@
 import os 
 import anthropic
 from typing import Optional 
+from app.core.config import settings
 
-client = anthropic.Client(os.getenv("AI_KEY"))
+client = anthropic.Anthropic(api_key=settings.AI_KEY)
 
 MODEL = "claude-sonnet-4-6"
 

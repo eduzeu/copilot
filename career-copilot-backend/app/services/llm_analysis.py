@@ -1,5 +1,5 @@
 import json 
-from services.llm_service import call_llm_json
+from app.services.llm_service import call_llm_json
 
 SYSTEM_PROMPT = '''
 You are a master resume coach and ATS (Applicant Tracking System) optimization expert. 
