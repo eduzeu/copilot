@@ -7,6 +7,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.analysis import router as analysis_router
 from app.api.routes.users import router as users_router
 from app.api.routes.dashboard import router as dashboard_router
+from app.api.routes.coach import router as coach_router
 
 app.include_router(users_router)
 app.include_router(analysis_router)
@@ -14,6 +15,7 @@ app.include_router(applications_router)
 app.include_router(resumes_router)
 app.include_router(auth_router)
 app.include_router(dashboard_router)
+app.include_router(coach_router) 
 
 
 @app.get("/health")
