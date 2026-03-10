@@ -13,7 +13,7 @@ app.include_router(analysis_router)
 app.include_router(applications_router)
 app.include_router(resumes_router)
 app.include_router(auth_router)
-app.include_router(dashboard_router)_
+app.include_router(dashboard_router)
 
 
 @app.get("/health")
