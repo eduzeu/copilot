@@ -6,16 +6,18 @@ app = FastAPI(tittle=settings.app_name, debug=settings.debug)
 from app.api.routes.auth import router as auth_router
 from app.api.routes.analysis import router as analysis_router
 from app.api.routes.users import router as users_router
+from app.api.routes.dashboard import router as dashboard_router
 
 app.include_router(users_router)
 app.include_router(analysis_router)
 app.include_router(applications_router)
 app.include_router(resumes_router)
 app.include_router(auth_router)
+app.include_router(dashboard_router)_
 
 
 @app.get("/health")
-def heath_check():
+def health_check():
     return {"status": "ok"}
 
 
