@@ -3,15 +3,25 @@ from fastapi import HTTPException
 
 from app.models.resume import Resume
 from app.schemas.resume import ResumeCreateRequest
-
-
-def create_resume(db: Session, user_id: int, req: ResumeCreateRequest) -> Resume:
-    resume = Resume(user_id=user_id, title=req.title, raw_text=req.raw_text)
-    db.add(resume)
-    db.commit()
-    db.refresh(resume)
-    return resume
-
+from app.services.storage_service import upload_resume_file, get_public_resume_url
+from app.utils.text_extract import extract_text_from_resume
+from app.services.storage_service import upload_resume_file, get_public_resume_url
+from app.utils.text_extract import extract_text_from_resume
+    
+def create_resume_from_upload(
+    db: Session,
+    user_id: int,
+    title: str,
+    filename: str,
+    content_type: str | None,
+    file_bytes: bytes,
+) -> Resume:
+    extracted_text = extract_text_from_resume(
+        file_bytes=file_bytes,
+        filename=filename,
+        content_type=content_type,
+    )
+   
 
 def list_resumes(db: Session, user_id: int) -> list[Resume]:
     return db.query(Resume).filter(Resume.user_id == user_id).order_by(Resume.created_at.desc()).all()

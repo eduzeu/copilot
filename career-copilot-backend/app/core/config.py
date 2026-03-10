@@ -11,9 +11,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str 
     access_token_expire_minutes: int = 30
 
-    storage_key_public: str = ""
-    storage_key_secret: str = ""
-    storage_url: str = ""
+    STORAGE_KEY_PUBLIC: str = ""
+    STORAGE_KEY_SECRET: str = ""
+    SUPABASE_BUCKET: str = 'resumes'
     
     class Config: 
         env_file = '.env' 

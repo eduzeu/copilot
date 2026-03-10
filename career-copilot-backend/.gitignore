@@ -33,3 +33,4 @@ htmlcov/
 nosetests.xml
 coverage.xml
 career_copilot.db
+venv/
