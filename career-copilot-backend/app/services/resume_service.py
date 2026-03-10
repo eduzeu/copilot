@@ -23,6 +23,18 @@ def get_resume(db: Session, user_id: int, resume_id: int) -> Resume:
         raise HTTPException(status_code=404, detail="Resume not found")
     return resume
 
+from app.schemas.resume import ResumeCreateRequest, ResumeUpdateRequest
+
+
+def update_resume(db: Session, user_id: int, resume_id: int, req: ResumeUpdateRequest) -> Resume:
+    resume = get_resume(db, user_id, resume_id)
+
+    for field, value in req.model_dump(exclude_unset=True).items():
+        setattr(resume, field, value)
+
+    db.commit()
+    db.refresh(resume)
+    return resume
 
 def delete_resume(db: Session, user_id: int, resume_id: int) -> None:
     resume = get_resume(db, user_id, resume_id)

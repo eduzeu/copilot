@@ -13,3 +13,7 @@ class ResumeOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ResumeUpdateRequest(BaseModel):
+    title: str | None = Field(default=None, min_length=2, max_length=255)
+    raw_text: str | None = Field(default=None, min_length=50)

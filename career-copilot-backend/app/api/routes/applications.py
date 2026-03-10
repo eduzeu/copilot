@@ -14,6 +14,13 @@ def create(req: ApplicationCreateRequest, db: Session = Depends(get_db), current
 def read(application_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     return application_service.get_application(db, current_user.id, application_id)
 
+@router.get("/", response_model=list[ApplicationResponse])
+def list_applications_endpoint(
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    return application_service.list_applications(db, user.id)
+
 @router.put("/{application_id}", response_model=ApplicationResponse)
 def update(application_id: int, req: ApplicationUpdateRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     return application_service.update_application(db, current_user.id, application_id, req) 
