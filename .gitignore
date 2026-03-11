@@ -21,3 +21,16 @@ requirements.txt
 create_tables.py
 
 alembic.ini
+
+package.json
+
+package-lock.json
+
+node_modules/ 
+
+.next/
+
+next-env.d.ts
+
+tsconfig.json
+

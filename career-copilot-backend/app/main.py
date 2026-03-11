@@ -21,6 +21,8 @@ app.include_router(dashboard_router)
 app.include_router(coach_router) 
 
 
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
