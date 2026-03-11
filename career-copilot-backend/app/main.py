@@ -2,12 +2,15 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.api.routes.applications import router as applications_router
 from app.api.routes.resumes import router as resumes_router
-app = FastAPI(tittle=settings.app_name, debug=settings.debug)
 from app.api.routes.auth import router as auth_router
 from app.api.routes.analysis import router as analysis_router
 from app.api.routes.users import router as users_router
 from app.api.routes.dashboard import router as dashboard_router
 from app.api.routes.coach import router as coach_router
+
+
+app = FastAPI(tittle=settings.app_name, debug=settings.debug)
+
 
 app.include_router(users_router)
 app.include_router(analysis_router)
