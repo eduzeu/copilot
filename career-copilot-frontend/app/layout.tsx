@@ -1,17 +1,18 @@
-import Link from 'next/link';
-import Login from './auth/login';
-import Button from '../components/ui/Button';
+import "./globals.css";
 
-const HomePage = () => {
-  return (
-    <div>
-      <h1>Welcome to Career Copilot</h1>
-      <Login />
-      <Link href="/auth/account">
-        <Button>Don't have an account yet? Create one here.</Button>
-      </Link>
-    </div>
-  );
+export const metadata = {
+  title: "Career Copilot",
+  description: "AI-powered job search assistant",
 };
 
-export default HomePage;
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
