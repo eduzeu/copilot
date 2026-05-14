@@ -10,7 +10,9 @@ class Settings(BaseSettings):
     env: str = 'dev'
     SECRET_KEY: str 
     access_token_expire_minutes: int = 30
-
+    
+    SUPABASE_KEY: str = ""
+    SUPABASE_URL: str = ""
     STORAGE_KEY_PUBLIC: str = ""
     STORAGE_KEY_SECRET: str = ""
     SUPABASE_BUCKET: str = 'resumes'

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_current_user
 from app.schemas.resume import ResumeCreateRequest, ResumeOut, ResumeUpdateRequest
-from app.services.resume_service import create_resume, list_resumes, get_resume, delete_resume, update_resume, create_resume_from_upload
+from app.services.resume_service import  list_resumes, get_resume, delete_resume, update_resume, create_resume_from_upload
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 

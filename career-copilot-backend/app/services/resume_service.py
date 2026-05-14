@@ -4,9 +4,9 @@ from fastapi import HTTPException
 from app.models.resume import Resume
 from app.schemas.resume import ResumeCreateRequest
 from app.services.storage_service import upload_resume_file, get_public_resume_url
-from app.utils.text_extract import extract_text_from_resume
+from app.utils.text_extract import extract_text_from_docx
 from app.services.storage_service import upload_resume_file, get_public_resume_url
-from app.utils.text_extract import extract_text_from_resume
+from app.utils.text_extract import extract_text_from_pdf
     
 def create_resume_from_upload(
     db: Session,
@@ -16,7 +16,7 @@ def create_resume_from_upload(
     content_type: str | None,
     file_bytes: bytes,
 ) -> Resume:
-    extracted_text = extract_text_from_resume(
+    extracted_text = extract_text_from_pdf(
         file_bytes=file_bytes,
         filename=filename,
         content_type=content_type,
