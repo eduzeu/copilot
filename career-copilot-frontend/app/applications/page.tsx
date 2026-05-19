@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AppNavbar from "../../components/AppNavbar";
 
 type Status = "applied" | "pending" | "interview" | "rejected" | "accepted";
 
@@ -169,11 +170,10 @@ export default function ApplicationsPage() {
       </div>
 
       <div className="mx-auto max-w-7xl">
+        <AppNavbar />
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-semibold text-violet-600">
-              Career Copilot
-            </p>
+
             <h1 className="mt-2 text-4xl font-black tracking-tight">
               Job Applications
             </h1>
@@ -183,11 +183,11 @@ export default function ApplicationsPage() {
           </div>
         </div>
 
-        {error && (
+        {/* {error && (
           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
             {error}
           </div>
-        )}
+        )} */}
 
         <section className="mb-8 grid gap-4 md:grid-cols-4">
           <StatCard label="Total Applications" value={stats.total} />

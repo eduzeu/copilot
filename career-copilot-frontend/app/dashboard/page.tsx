@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import AppNavbar from "../../components/AppNavbar";
 
 type Status = "applied" | "pending" | "interview" | "rejected" | "accepted";
 
@@ -83,10 +84,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="mx-auto max-w-7xl">
+        <AppNavbar />
         <nav className="mb-10 flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-violet-600">
-              Career Copilot
             </p>
             <h1 className="mt-2 text-4xl font-black tracking-tight">
               Dashboard
