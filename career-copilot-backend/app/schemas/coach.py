@@ -1,18 +1,18 @@
 
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Optional 
 from pydantic import BaseModel, Field
 
 
 QuestionType = Literal["technical", "behavioral", "system_design", "mixed"]
 
 
-class GenerateCoachQuestionsRequest(BaseModel):
-    resume_id: int
-    application_id: int
-    question_type: QuestionType
-    count: int = Field(default=5, ge=1, le=10)
-
+class CoachQuestionRequest(BaseModel):
+    role: str
+    company: Optional[str] = None
+    job_description: Optional[str] = None
+    question_type: str = "technical"
+    count: int = 10
 
 class CoachQuestionOut(BaseModel):
     id: int

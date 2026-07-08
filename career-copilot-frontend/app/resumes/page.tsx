@@ -14,7 +14,7 @@ export default function AIToolsPage() {
   const [company, setCompany] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
 
   const API_URL = "http://127.0.0.1:8000";
@@ -24,7 +24,7 @@ export default function AIToolsPage() {
 
     setLoading(true);
     setError("");
-    setResult("");
+    setResult(null);
 
     try {
       const token = localStorage.getItem("token");
@@ -72,6 +72,8 @@ export default function AIToolsPage() {
           role,
           company,
           job_description: jobDescription,
+          question_type: "technical",
+          count: 10,
         });
       }
 
@@ -82,18 +84,27 @@ export default function AIToolsPage() {
         throw new Error(data.detail || "AI request failed");
       }
 
-      setResult(
-        data.feedback ||
-        data.analysis ||
-        data.questions ||
-        data.response ||
-        JSON.stringify(data, null, 2)
-      );
+      if (mode === "coach") {
+        setResult(data.questions || []);
+      } else {
+        setResult(
+          data.feedback ||
+          data.analysis ||
+          data.response ||
+          JSON.stringify(data, null, 2)
+        );
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  }
+
+  function resetMode(nextMode: ToolMode) {
+    setMode(nextMode);
+    setResult(null);
+    setError("");
   }
 
   return (
@@ -105,6 +116,7 @@ export default function AIToolsPage() {
 
       <div className="mx-auto max-w-6xl">
         <AppNavbar />
+
         <div className="mb-8">
           <p className="text-sm font-semibold text-violet-600">
             Career Copilot
@@ -246,9 +258,30 @@ export default function AIToolsPage() {
               {loading ? (
                 <p className="text-slate-500">Thinking...</p>
               ) : result ? (
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-                  {result}
-                </pre>
+                mode === "coach" && Array.isArray(result) ? (
+                  <div className="space-y-4">
+                    {result.map((q: any, index: number) => (
+                      <div
+                        key={index}
+                        className="rounded-xl border border-slate-200 bg-white p-4"
+                      >
+                        <h3 className="font-semibold text-slate-900">
+                          {index + 1}. {q.question_text}
+                        </h3>
+
+                        {q.reason && (
+                          <p className="mt-2 text-sm text-slate-500">
+                            {q.reason}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <pre className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                    {String(result)}
+                  </pre>
+                )
               ) : (
                 <div className="flex h-full min-h-[360px] items-center justify-center text-center">
                   <div>
@@ -266,12 +299,6 @@ export default function AIToolsPage() {
       </div>
     </main>
   );
-
-  function resetMode(nextMode: ToolMode) {
-    setMode(nextMode);
-    setResult("");
-    setError("");
-  }
 }
 
 function ToolCard({
@@ -290,8 +317,8 @@ function ToolCard({
       type="button"
       onClick={onClick}
       className={`rounded-3xl border p-6 text-left shadow-xl transition hover:scale-[1.02] ${active
-        ? "border-violet-300 bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-blue-200"
-        : "border-slate-200 bg-white/80 text-slate-950"
+          ? "border-violet-300 bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-blue-200"
+          : "border-slate-200 bg-white/80 text-slate-950"
         }`}
     >
       <h3 className="text-xl font-black">{title}</h3>

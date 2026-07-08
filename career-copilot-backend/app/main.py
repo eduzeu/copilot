@@ -1,33 +1,27 @@
 from fastapi import FastAPI
-from app.core.config import settings
-from app.api.routes.applications import router as applications_router
-from app.api.routes.resumes import router as resumes_router
-from app.api.routes.auth import router as auth_router
-from app.api.routes.analysis import router as analysis_router
-from app.api.routes.users import router as users_router
-from app.api.routes.dashboard import router as dashboard_router
-from app.api.routes.coach import router as coach_router
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import auth, applications, resumes, analysis, coach, dashboard, users
 
-app = FastAPI(tittle=settings.app_name, debug=settings.debug)
+app = FastAPI(title="Career Copilot API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-app.include_router(users_router)
-app.include_router(analysis_router)
-app.include_router(applications_router)
-app.include_router(resumes_router)
-app.include_router(auth_router)
-app.include_router(dashboard_router)
-app.include_router(coach_router) 
-
-
+app.include_router(auth.router)
+app.include_router(applications.router)
+app.include_router(resumes.router)
+app.include_router(analysis.router)
+app.include_router(coach.router)
+app.include_router(dashboard.router)
+app.include_router(users.router)
 
 
 @app.get("/health")
-def health_check():
+def health():
     return {"status": "ok"}
-
-
-@app.get("/ready")
-def ready_check():
-    return {"status": "ready"}

@@ -16,9 +16,13 @@ def register_user(request: RegisterRequest, db: Session) -> User:
   db.refresh(new_user)
   return new_user
 
-def login_user(db: Session, email: str, password: str) -> User: 
-  user = db.query(User).filter(User.email == email).first() 
-  check_password = verify_password(password, user.hashed_password)  
-  if not user or not check_password: 
-    raise HTTPException(status_code=400, detail="Invalid email or password")
-  return create_access_token(subject=str(user.id))  
+def login_user(db: Session, email: str, password: str):
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+
+    if not verify_password(password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+
+    return create_access_token(subject=str(user.id))

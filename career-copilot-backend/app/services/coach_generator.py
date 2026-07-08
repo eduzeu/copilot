@@ -1,74 +1,63 @@
-import json
-from typing import Any
+import re
+from typing import Optional
 
-from app.services.llm_service import call_llm_json
+from app.services.llm_service import call_llm
 
 
-def generate_questions_for_interviews(application: Any) -> dict:
-    """
-    Generate interview questions for a given application using the LLM.
-
-    Args:
-        application: SQLAlchemy application object containing job details
-
-    Returns:
-        dict with:
-        - questions: list[str]
-        - error: str | None
-        - details: str | None
-    """
-
-    # Use getattr so the function doesn't crash if field names differ slightly
-    company = getattr(application, "company_name", None) or getattr(application, "company", "Unknown Company")
-    role = getattr(application, "role", None) or getattr(application, "role_title", "Unknown Role")
-    job_description = getattr(application, "job_description", None) or ""
-
-    if not job_description.strip():
-        return {
-            "questions": [],
-            "error": "Application does not contain a job description.",
-            "details": None,
-        }
+def generate_questions_for_interviews(
+    role: str,
+    company: Optional[str] = None,
+    job_description: Optional[str] = None,
+    question_type: str = "technical",
+    count: int = 10,
+) -> list[dict]:
+    company = company or "Unknown Company"
+    job_description = job_description or ""
 
     prompt = f"""
-You are a career coach helping a software engineering candidate prepare for interviews.
+Generate exactly {count} concise interview questions for a software engineering interview.
 
-Based on the application details below, generate 4 interview questions the candidate should prepare for.
-
-Requirements:
-- Return ONLY valid JSON
-- The JSON must be an array of strings
-- Include a mix of likely technical and behavioral questions when appropriate
-- Questions should be tailored to the role and job description
-
-APPLICATION DETAILS:
-Company: {company}
 Role: {role}
-Job Description: {job_description}
+Company: {company}
+Question type: {question_type}
+
+Job description:
+{job_description}
+
+Rules:
+- Do not write an introduction.
+- Do not write full LeetCode problem statements.
+- Do not include code examples.
+- Each question must be one sentence.
+- Return only numbered interview questions.
+- Keep each question under 25 words.
 """.strip()
 
     try:
-        raw = call_llm_json(prompt, max_tokens=512)
+        raw = call_llm(prompt, max_tokens=1600)
 
-        if isinstance(raw, list):
-            questions = raw
-        elif isinstance(raw, str):
-            questions = json.loads(raw)
-        else:
-            raise ValueError("LLM response was neither a JSON string nor a Python list.")
+        lines = [line.strip() for line in raw.split("\n") if line.strip()]
 
-        if not isinstance(questions, list) or not all(isinstance(q, str) for q in questions):
-            raise ValueError("LLM response was not a valid list of question strings.")
+        questions = []
 
-        return {
-            "questions": questions,
-            "error": None,
-            "details": None,
-        }
+        for line in lines:
+            match = re.match(r"^\d+[\.\)]\s*(.+)", line)
 
-    except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
-        return {
-            "questions": [],
-            "error": "Failed to generate interview questions. Please try again.",
-            "details": str(e),
-        }
+            if match:
+                cleaned = match.group(1).strip()
+                questions.append({
+                    "question_type": question_type,
+                    "question_text": cleaned,
+                    "reason": None,
+                })
+
+        return questions[:count]
+
+    except Exception as e:
+        return [
+            {
+                "question_type": question_type,
+                "question_text": "Failed to generate interview questions. Please try again.",
+                "reason": str(e),
+            }
+        ]
