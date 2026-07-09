@@ -8,6 +8,7 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 
 @router.post('/', response_model=ApplicationResponse)
 def create(req: ApplicationCreateRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    print('coming here')
     return application_service.create_application(db, current_user.id, req)
 
 @router.get("/{application_id}", response_model=ApplicationResponse)

@@ -1,7 +1,9 @@
 from enum import Enum
 
+
 class ApplicationStatus(str, Enum):
-    PENDING = "PENDING"
-    INTERVIEWING = "INTERVIEWING"
-    OFFER = "OFFER"
-    REJECTED = "REJECTED"
+    APPLIED = "applied"
+    PENDING = "pending"
+    INTERVIEW = "interview"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"

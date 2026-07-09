@@ -25,11 +25,11 @@ Job description:
 {job_description}
 
 Rules:
-- Do not write an introduction.
+- write an introduction.
 - Do not write full LeetCode problem statements.
 - Do not include code examples.
 - Each question must be one sentence.
-- Return only numbered interview questions.
+- Return numbered interview questions after introduction.
 - Keep each question under 25 words.
 """.strip()
 

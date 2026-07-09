@@ -8,11 +8,10 @@ type Status = "applied" | "pending" | "interview" | "rejected" | "accepted";
 type Application = {
   id: string;
   company: string;
-  role: string;
-  location?: string;
+  role_title: string;
+  location: string;
+  date_applied: string;
   status: Status;
-  applied_date?: string;
-  notes?: string;
 };
 
 const statuses: Status[] = ["applied", "pending", "interview", "rejected", "accepted"];
@@ -20,10 +19,12 @@ const statuses: Status[] = ["applied", "pending", "interview", "rejected", "acce
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
+  const [role_title, setRole] = useState("");
   const [location, setLocation] = useState("");
+  const [dateApplied, setDateApplied] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [status, setStatus] = useState<Status>("applied");
-  const [notes, setNotes] = useState("");
   const [filter, setFilter] = useState<"all" | Status>("all");
   const [error, setError] = useState("");
 
@@ -66,10 +67,10 @@ export default function ApplicationsPage() {
         },
         body: JSON.stringify({
           company,
-          role,
-          location,
+          role_title,
+          date_applied: dateApplied,
           status,
-          notes,
+          location,
         }),
       });
 
@@ -82,8 +83,8 @@ export default function ApplicationsPage() {
       setCompany("");
       setRole("");
       setLocation("");
+      setDateApplied(new Date().toISOString().split("T")[0]);
       setStatus("applied");
-      setNotes("");
 
       fetchApplications();
     } catch (err: any) {
@@ -171,23 +172,23 @@ export default function ApplicationsPage() {
 
       <div className="mx-auto max-w-7xl">
         <AppNavbar />
+
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-
             <h1 className="mt-2 text-4xl font-black tracking-tight">
               Job Applications
             </h1>
             <p className="mt-2 text-slate-600">
-              Track every role, status, and note in one clean dashboard.
+              Track every role and status in one clean dashboard.
             </p>
           </div>
         </div>
 
-        {/* {error && (
+        {error && (
           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
             {error}
           </div>
-        )} */}
+        )}
 
         <section className="mb-8 grid gap-4 md:grid-cols-4">
           <StatCard label="Total Applications" value={stats.total} />
@@ -208,8 +209,21 @@ export default function ApplicationsPage() {
 
             <div className="mt-6 space-y-4">
               <Input label="Company" value={company} setValue={setCompany} placeholder="Google" />
-              <Input label="Role" value={role} setValue={setRole} placeholder="Software Engineer Intern" />
+              <Input label="Role" value={role_title} setValue={setRole} placeholder="Software Engineer Intern" />
               <Input label="Location" value={location} setValue={setLocation} placeholder="New York, NY" />
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Date Applied
+                </label>
+                <input
+                  type="date"
+                  value={dateApplied}
+                  onChange={(e) => setDateApplied(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  required
+                />
+              </div>
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -226,18 +240,6 @@ export default function ApplicationsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Notes
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Recruiter name, interview date, referral, etc."
-                  className="min-h-28 w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                />
               </div>
 
               <button
@@ -292,21 +294,19 @@ export default function ApplicationsPage() {
                           <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-500" />
                           <div>
                             <h3 className="text-lg font-black">{app.company}</h3>
-                            <p className="text-sm text-slate-500">{app.role}</p>
+                            <p className="text-sm text-slate-500">
+                              {app.role_title}
+                            </p>
                           </div>
                         </div>
 
-                        {app.location && (
-                          <p className="mt-3 text-sm text-slate-500">
-                            {app.location}
-                          </p>
-                        )}
+                        <p className="mt-3 text-sm text-slate-500">
+                          {app.location}
+                        </p>
 
-                        {app.notes && (
-                          <p className="mt-3 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">
-                            {app.notes}
-                          </p>
-                        )}
+                        <p className="mt-2 text-sm text-slate-500">
+                          Applied: {new Date(app.date_applied).toLocaleDateString()}
+                        </p>
                       </div>
 
                       <div className="flex flex-col gap-3 md:items-end">
@@ -377,7 +377,7 @@ function Input({
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-        required={label !== "Location"}
+        required
       />
     </div>
   );
