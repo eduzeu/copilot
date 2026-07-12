@@ -1,20 +1,21 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
-from app.services.user_management import get_user, update_profile, delete_user
-from app.api.deps import get_db
+from app.services.user_management import update_profile, delete_user
+from app.api.deps import get_db, get_current_user
+from app.schemas.user import UserResponse, UserUpdateRequest
 
 router = APIRouter(prefix="/users", tags=["users"])
-@router.get("/me/{user_id}")
 
-def get_current_user_endpoint(user_id: int, db: Session = Depends(get_db)):
-    return get_user(db, user_id)
 
-@router.put("/me/{user_id}")
-def update_profile_endpoint(user_id: int, body: dict, db: Session = Depends(get_db)):
-    updated_user = update_profile(db, user_id, body)
-    return updated_user 
+@router.get("/me", response_model=UserResponse)
+def get_current_user_endpoint(current_user=Depends(get_current_user)):
+    return current_user
 
-@router.delete("/me/{user_id}")
-def delete_user_endpoint(user_id: int, db: Session = Depends(get_db)):
-    delete_user(db, user_id)
-    return {"message": "User deleted successfully"} 
+@router.put("/me", response_model=UserResponse)
+def update_profile_endpoint(body: UserUpdateRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    return update_profile(db, current_user.id, body)
+
+@router.delete("/me", status_code=204)
+def delete_user_endpoint(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    delete_user(db, current_user.id)
+    return Response(status_code=204)

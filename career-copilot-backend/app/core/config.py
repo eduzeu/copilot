@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,20 +13,26 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./career_copilot.db"
 
     # AI
-    AI_KEY: str = ""
+    ai_key: str = ""
 
     # Authentication
-    SECRET_KEY: str
+    secret_key: str = "change-me-in-production"
     access_token_expire_minutes: int = 30
 
     # Supabase
-    SUPABASE_KEY: str = ""
-    SUPABASE_URL: str = ""
-    STORAGE_KEY_PUBLIC: str = ""
-    STORAGE_KEY_SECRET: str = ""
-    SUPABASE_BUCKET: str = "resumes"
+    supabase_key: str = ""
+    supabase_url: str = ""
+    storage_key_public: str = ""
+    storage_key_secret: str = ""
+    supabase_bucket: str = "resumes"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    max_upload_bytes: int = 10 * 1024 * 1024
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 settings = Settings()

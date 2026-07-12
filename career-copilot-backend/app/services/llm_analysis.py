@@ -3,16 +3,38 @@ from app.services.llm_service import call_llm_json
 
 SYSTEM_PROMPT = '''
 You are a master resume coach and ATS (Applicant Tracking System) optimization expert. 
-Your task is to analyze individual bullet points from a resume in the context of a specific job description and provide feedback 
-on how well each bullet point matches the job requirements.
-ALWAYS respond with a JSON object that includes the following fields:
-- relevance_score: a number between 0 and 100 indicating how relevant the bullet point is
-- feedback: a brief explanation of why the bullet point received its relevance score
-- rewrite_ats: a rewritten version of the bullet point optimized for ATS, incorporating relevant keywords from the job description
-- rewrite_strong: a rewritten version of the bullet point optimized for human readers, emphasizing impact and achievements
-- missing_keywords: a list of important keywords from the job description that are not present in the original bullet point
-Make sure to provide constructive feedback and actionable suggestions for improvement. 
+Provide constructive, actionable feedback and always respond with valid JSON only.
 '''
+
+def analyze_resume_general(resume_text: str) -> dict:
+    """
+    Analyze a full resume for general quality, ATS readiness, and impact.
+    """
+    prompt = f"""Analyze this full resume for general quality.
+Evaluate clarity, structure, measurable impact, action verbs, ATS readability, and missing detail.
+
+RESUME:
+{resume_text}
+
+Return a JSON object with exactly these fields:
+{{
+    "quality_score": <integer 0-100 reflecting overall resume quality>,
+    "feedback": <2-4 sentence overall summary>,
+    "rewrite_ats": <short paragraph describing the highest-priority ATS rewrite strategy>,
+    "rewrite_strong": <short paragraph describing how to make the resume stronger for a human reviewer>,
+    "suggestions": <list of 4-6 short, specific improvements>,
+    "quantification_suggestions": <list of 3-6 metrics or achievements the candidate could quantify>
+}}"""
+
+    raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, max_tokens=2048)
+    return {
+        "quality_score": raw.get("quality_score"),
+        "feedback": raw.get("feedback"),
+        "rewrite_ats": raw.get("rewrite_ats"),
+        "rewrite_strong": raw.get("rewrite_strong"),
+        "suggestions": raw.get("suggestions", []),
+        "quantification_suggestions": raw.get("quantification_suggestions", []),
+    }
 
 def analyze_bullet_general(bullet: str) -> dict:
 
@@ -44,7 +66,7 @@ def analyze_bullet_general(bullet: str) -> dict:
 
     try: 
         raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT)
-        result = json.loads(raw)
+        result = raw
 
         return {
             "quality_score": result.get("quality_score"),
@@ -54,6 +76,8 @@ def analyze_bullet_general(bullet: str) -> dict:
             "suggestions": result.get("suggestions", []),
             "quantification_suggestions": result.get("quantification_suggestions", []),
             }
+    except RuntimeError:
+        raise
     except Exception as e:
         print(f"Error analyzing bullet: {e}")
         return {
@@ -99,7 +123,7 @@ def analyze_bullet_with_llm(bullet: str, job_description: str) -> dict:
     
     try: 
         raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT)
-        result = json.loads(raw)
+        result = raw
         return {
             "relevance_score": result.get("relevance_score"),
             "feedback": result.get("feedback"),
@@ -107,6 +131,8 @@ def analyze_bullet_with_llm(bullet: str, job_description: str) -> dict:
             "rewrite_strong": result.get("rewrite_strong"),
             "missing_keywords": result.get("missing_keywords", []),
             }
+    except RuntimeError:
+        raise
     except Exception as e:
         print(f"Error analyzing bullet: {e}")
         return {
@@ -148,7 +174,7 @@ Return a JSON object with exactly these fields:
 
     try:
         raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, max_tokens=1024)
-        result = json.loads(raw)
+        result = raw
 
         return {
             "overall_score": int(result.get("overall_score", 0)),
@@ -159,6 +185,8 @@ Return a JSON object with exactly these fields:
             "recommendation": result.get("recommendation", "Partial Match"),
         }
 
+    except RuntimeError:
+        raise
     except (json.JSONDecodeError, KeyError, ValueError) as e:
         return {
             "overall_score": 0,

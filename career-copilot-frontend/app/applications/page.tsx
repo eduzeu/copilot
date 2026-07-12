@@ -6,7 +6,7 @@ import AppNavbar from "../../components/AppNavbar";
 type Status = "applied" | "pending" | "interview" | "rejected" | "accepted";
 
 type Application = {
-  id: string;
+  id: number;
   company: string;
   role_title: string;
   location: string;
@@ -28,7 +28,7 @@ export default function ApplicationsPage() {
   const [filter, setFilter] = useState<"all" | Status>("all");
   const [error, setError] = useState("");
 
-  const API_URL = "http://127.0.0.1:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   async function fetchApplications() {
     try {
@@ -92,7 +92,7 @@ export default function ApplicationsPage() {
     }
   }
 
-  async function updateStatus(id: string, newStatus: Status) {
+  async function updateStatus(id: number, newStatus: Status) {
     try {
       const token = localStorage.getItem("token");
 
@@ -123,7 +123,7 @@ export default function ApplicationsPage() {
     }
   }
 
-  async function deleteApplication(id: string) {
+  async function deleteApplication(id: number) {
     try {
       const token = localStorage.getItem("token");
 

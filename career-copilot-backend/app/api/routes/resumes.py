@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_current_user
@@ -9,21 +9,12 @@ router = APIRouter(prefix="/resumes", tags=["resumes"])
 
 @router.post('/upload', response_model=ResumeOut)
 async def upload_resume_endpoint(
-    title: str,
-    file: bytes,
-    filename: str,
-    content_type: str | None = None,
+    title: str = Form(...),
+    file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    return create_resume_from_upload(
-        db=db,
-        user_id=current_user.id,
-        title=title,
-        filename=filename,
-        content_type=content_type,
-        file_bytes=file
-    )
+    return await create_resume_from_upload(db, current_user.id, title, file)
 
 @router.get("/", response_model=list[ResumeOut])
 def get_resumes_endpoint(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
@@ -44,4 +35,5 @@ def get_resume_endpoint(resume_id: int, db: Session = Depends(get_db), current_u
 
 @router.delete("/{resume_id}")
 def delete_resume_endpoint(resume_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    delete_resume(db, current_user.id, resume_id)   
+    delete_resume(db, current_user.id, resume_id)
+    return Response(status_code=204)

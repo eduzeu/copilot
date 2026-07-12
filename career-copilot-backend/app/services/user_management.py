@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
 from fastapi import HTTPException
+from app.schemas.user import UserUpdateRequest
 
 
 
@@ -11,9 +12,9 @@ def get_user(db: Session, user_id: int) -> User:
       raise HTTPException(status_code=404, detail="User not found")
     return user
 
-def update_profile(db: Session, user_id: int, body: dict) -> User: 
+def update_profile(db: Session, user_id: int, body: UserUpdateRequest) -> User:
     user = get_user(db, user_id)
-    for key, value in body.items():
+    for key, value in body.model_dump(exclude_unset=True).items():
         setattr(user, key, value)
     db.commit()
     db.refresh(user)

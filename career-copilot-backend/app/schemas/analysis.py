@@ -16,14 +16,11 @@ class AnalysisBulletOut(BaseModel):
     rewrite_strong: Optional[str] = None
     missing_keywords: List[str] = []
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class AnalysisRunOut(BaseModel):
     id: int
     job_title: Optional[str] = None
     bullets: List[AnalysisBulletOut]
 
-    class Config:
-        from_attributes = True
-        
+    model_config = {"from_attributes": True}

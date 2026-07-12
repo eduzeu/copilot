@@ -1,42 +1,31 @@
 import re
-from typing import List 
 
-BULLET_CHARS = r"[\-\*\u2022\u25E6\u2219\u2043\u00B7]"    # Common bullet characters
-
-def extract_bullets(resume_text: str) -> List[str]: 
-  '''
-  Heuristic bullet extractor: 
-  - Prefer lines that start with bullet characters
-  -Also capture "Action verb..." lines if they look like bullets
-  '''
-
-  lines = [ln.strip() for ln in resume_text.splitlines() if ln.strip()]
-  lines = [ln for ln in lines if ln]
-
-  bullets: List[str] = []
-
-  bullet_re = re.compile(rf"^({BULLET_CHARS})\s+(.*)")
-
-  for ln in lines: 
-    m = bullet_re.match(ln)
-    if m: 
-      text = m.group(1).strip() 
-      if len(text) >= 10: 
-        bullets.append(text)
-      continue 
-
-     # fallback: treat short “sentence-like” lines as bullets if they look like accomplishments
-    if 20 <= len(ln) <= 220 and ln[0].isalpha() and (ln.endswith(".") or "," in ln or "%" in ln):
-        bullets.append(ln)
+BULLET_CHARS = r"[\-\*\u2022\u25E6\u2219\u2043\u00B7]"
 
 
-    seen = set() 
-    out = []
-    for b in bullets: 
-      key = b.lower()
-      if key not in seen: 
-        seen.add(key)
-        out.append(b)
-    
-    return out[:30]
-  
+def extract_bullets(resume_text: str) -> list[str]:
+    """Extract and de-duplicate likely accomplishment bullets."""
+    lines = [line.strip() for line in resume_text.splitlines() if line.strip()]
+    bullet_re = re.compile(rf"^({BULLET_CHARS})\s+(.*)")
+    bullets: list[str] = []
+
+    for line in lines:
+        match = bullet_re.match(line)
+        if match:
+            text = match.group(2).strip()
+            if len(text) >= 10:
+                bullets.append(text)
+            continue
+        if 20 <= len(line) <= 220 and line[0].isalpha() and (
+            line.endswith(".") or "," in line or "%" in line
+        ):
+            bullets.append(line)
+
+    seen: set[str] = set()
+    unique: list[str] = []
+    for bullet in bullets:
+        key = bullet.casefold()
+        if key not in seen:
+            seen.add(key)
+            unique.append(bullet)
+    return unique[:30]

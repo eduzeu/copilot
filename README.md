@@ -1,21 +1,25 @@
-## 🚀 Career Copilot
+# Career Copilot
 
-Career Copilot is a web application designed to help software engineering candidates improve their job search and stay organized throughout the application process.
+Career Copilot is a Next.js and FastAPI application for tracking job applications,
+analyzing resumes with Gemini, and generating interview questions.
 
-### 📄 Resume Analysis
-The platform allows users to upload a resume and perform two types of analysis:
+## Local setup
 
-1. **General Bullet Point Feedback**  
-   Analyzes each resume bullet point individually and provides suggestions to improve clarity, impact, and overall effectiveness.
+1. Copy `career-copilot-backend/.env.example` to `.env` and set `SECRET_KEY`.
+2. From `career-copilot-backend`, create a virtual environment and run
+   `pip install -r requirements.txt`.
+3. Run `python create_tables.py`, then `uvicorn app.main:app --reload`.
+4. Copy `career-copilot-frontend/.env.example` to `.env.local`.
+5. From `career-copilot-frontend`, run `npm install` and `npm run dev`.
 
-2. **Job-Specific LLM Analysis**  
-   Users can paste a job description alongside their resume, and the platform generates a detailed analysis showing how well the resume aligns with the role, along with suggestions to better match the job requirements.
+SQLite works by default. To use PostgreSQL, start `docker compose up -d db` and set
+`DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/careercopilot`.
+Supabase is optional; without its configuration, resume text is stored in the database
+without uploading the original file. AI tools require `AI_KEY`.
 
-### 📊 Application Tracker
-Career Copilot also includes an application tracker that helps users manage their job search in an organized way. Users can track the status of each application by marking it as:
+## Verification
 
-- Pending
-- Rejected
-- Accepted
+- Backend: `python -m pytest`
+- Frontend: `npm run build`
 
-This helps candidates maintain a clear view of their progress and manage their applications more efficiently.
+Never commit `.env`, `.env.local`, virtual environments, or API credentials.

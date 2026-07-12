@@ -11,8 +11,8 @@ class CoachQuestionRequest(BaseModel):
     role: str
     company: Optional[str] = None
     job_description: Optional[str] = None
-    question_type: str = "technical"
-    count: int = 10
+    question_type: QuestionType = "technical"
+    count: int = Field(default=10, ge=1, le=20)
 
 class CoachQuestionOut(BaseModel):
     id: int
@@ -20,8 +20,7 @@ class CoachQuestionOut(BaseModel):
     question_text: str
     reason: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class CoachSessionOut(BaseModel):
@@ -32,5 +31,4 @@ class CoachSessionOut(BaseModel):
     created_at: datetime
     questions: list[CoachQuestionOut]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

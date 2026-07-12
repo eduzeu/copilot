@@ -1,34 +1,27 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from app.models.user import User
+
+from app.models.application import Application
 from app.schemas.dashboard import DashboardResponse
-from app.models.dashboard import Dashboard
-
-
-def add_data_to_dashboard(db: Session, user_id: int, data: dict):
-    dashboard = db.query(Dashboard).filter(Dashboard.user_id == user_id).first()
-    if not dashboard:
-        dashboard = Dashboard(user_id=user_id, **data)
-        db.add(dashboard)
-    else:
-        for key, value in data.items():
-            setattr(dashboard, key, value)
-    db.commit()
-    db.refresh(dashboard)
-    return dashboard
 
 
 def get_dashboard(db: Session, user_id: int) -> DashboardResponse:
-    dashboard = db.query(Dashboard).filter(Dashboard.user_id == user_id).first()
-    if not dashboard:
-        raise HTTPException(status_code=404, detail="Dashboard not found")
-    return DashboardResponse(
-        total_applications=dashboard.total_applications,
-        pending_applications=dashboard.pending_applications,
-        interviewing=dashboard.interviewing,
-        offers=dashboard.offers,
-        interview_rate=dashboard.interview_rate,
-        offer_rate=dashboard.offer_rate
+    rows = (
+        db.query(Application.status, func.count(Application.id))
+        .filter(Application.user_id == user_id)
+        .group_by(Application.status)
+        .all()
     )
-
-
+    counts = {status: count for status, count in rows}
+    total = sum(counts.values())
+    interviews = counts.get("interview", 0)
+    offers = counts.get("accepted", 0)
+    return DashboardResponse(
+        user_id=user_id,
+        total_applications=total,
+        pending_applications=counts.get("pending", 0),
+        interviewing=interviews,
+        offers=offers,
+        interview_rate=(interviews / total * 100) if total else 0,
+        offer_rate=(offers / total * 100) if total else 0,
+    )

@@ -16,8 +16,7 @@ class DashboardResponse(BaseModel):
     interview_rate: float
     offer_rate: float
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
     
 
 class DashboardUpdateRequest(BaseModel):

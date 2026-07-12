@@ -7,12 +7,12 @@ import AppNavbar from "../../components/AppNavbar";
 type Status = "applied" | "pending" | "interview" | "rejected" | "accepted";
 
 type Application = {
-  id: string;
+  id: number;
   company: string;
-  role: string;
+  role_title: string;
   location?: string;
   status: Status;
-  applied_date?: string;
+  date_applied: string;
   notes?: string;
 };
 
@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [error, setError] = useState("");
 
-  const API_URL = "http://127.0.0.1:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   async function fetchApplications() {
     try {
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                 >
                   <div>
                     <p className="font-black">{app.company}</p>
-                    <p className="text-sm text-slate-500">{app.role}</p>
+                    <p className="text-sm text-slate-500">{app.role_title}</p>
                   </div>
 
                   <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyle(app.status)}`}>

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 from app.api.deps import get_db, get_current_user
 from app.services.application_service import create_application, get_application, update_application, delete_application
@@ -8,7 +8,6 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 
 @router.post('/', response_model=ApplicationResponse)
 def create(req: ApplicationCreateRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    print('coming here')
     return application_service.create_application(db, current_user.id, req)
 
 @router.get("/{application_id}", response_model=ApplicationResponse)
@@ -28,4 +27,5 @@ def update(application_id: int, req: ApplicationUpdateRequest, db: Session = Dep
 
 @router.delete("/{application_id}")
 def delete(application_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    return application_service.delete_application(db, current_user.id, application_id)
+    application_service.delete_application(db, current_user.id, application_id)
+    return Response(status_code=204)

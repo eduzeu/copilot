@@ -24,8 +24,8 @@ class ApplicationResponse(BaseModel):
     role_title: str
     date_applied: date
     status: ApplicationStatus
+    location: str
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

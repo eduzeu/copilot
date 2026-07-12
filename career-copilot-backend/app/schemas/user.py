@@ -5,5 +5,8 @@ class UserResponse(BaseModel):
     id: int
     email: EmailStr
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
+
+class UserUpdateRequest(BaseModel):
+    email: EmailStr | None = None

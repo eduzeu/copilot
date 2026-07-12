@@ -1,34 +1,23 @@
 from io import BytesIO
-from typing import Optional
+
+import pdfplumber
 from docx import Document
-import pdfplumber 
 
-def extract_text_from_docx(file: BytesIO) -> str:
-    """Extracts text from a DOCX file."""
-    try: 
-        document = Document(file)
-        return "\n".join([para.text for para in document.paragraphs])
-    except Exception as e: 
-        print(f"Error extracting DOCX text: {e}")
-        raise e
 
-def extract_text_from_pdf(file: BytesIO) -> str:
-    """Extracts text from a PDF file."""
-    try: 
-        text = ""
-        with pdfplumber.open(file) as pdf:
-            for page in pdf.pages:
-                text += page.extract_text()
-        return text
-    except Exception as e: 
-        print(f"Error extracting PDF text: {e}")
-        raise e
-
-def extract_text(file: BytesIO, filename: str) -> Optional[str]:
-    """Determines file type and extracts text accordingly."""
-    if filename.endswith('.docx'):
-        return extract_text_from_docx(file)
-    elif filename.endswith('.pdf'):
-        return extract_text_from_pdf(file)
+def extract_text(file_bytes: bytes, filename: str) -> str:
+    name = filename.lower()
+    stream = BytesIO(file_bytes)
+    if name.endswith(".pdf"):
+        with pdfplumber.open(stream) as pdf:
+            text = "\n".join((page.extract_text() or "") for page in pdf.pages)
+    elif name.endswith(".docx"):
+        document = Document(stream)
+        text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+    elif name.endswith(".txt"):
+        text = file_bytes.decode("utf-8", errors="replace")
     else:
-        raise ValueError("Unsupported file type. Only .docx and .pdf are allowed.")
+        raise ValueError("Unsupported file type. Use PDF, DOCX, or TXT.")
+    text = text.strip()
+    if not text:
+        raise ValueError("No readable text was found in the uploaded file.")
+    return text

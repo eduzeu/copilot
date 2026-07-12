@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 from app.models.user import User
 from app.core.security import create_access_token, verify_password, hash_password
 from fastapi import HTTPException
@@ -20,9 +19,9 @@ def login_user(db: Session, email: str, password: str):
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
-        raise HTTPException(status_code=400, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if not verify_password(password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     return create_access_token(subject=str(user.id))

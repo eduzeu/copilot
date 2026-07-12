@@ -17,7 +17,7 @@ export default function AIToolsPage() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
 
-  const API_URL = "http://127.0.0.1:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,12 +87,7 @@ export default function AIToolsPage() {
       if (mode === "coach") {
         setResult(data.questions || []);
       } else {
-        setResult(
-          data.feedback ||
-          data.analysis ||
-          data.response ||
-          JSON.stringify(data, null, 2)
-        );
+        setResult(data.feedback ?? data.analysis ?? data.response ?? data);
       }
     } catch (err: any) {
       setError(err.message);
@@ -114,7 +109,7 @@ export default function AIToolsPage() {
         <div className="absolute bottom-[-120px] left-[-120px] h-[420px] w-[420px] rounded-full bg-blue-300 opacity-40 blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-7xl">
         <AppNavbar />
 
         <div className="mb-8">
@@ -152,7 +147,7 @@ export default function AIToolsPage() {
           />
         </div>
 
-        <section className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+        <section className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
           <form
             onSubmit={handleSubmit}
             className="rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-2xl backdrop-blur-xl"
@@ -278,9 +273,7 @@ export default function AIToolsPage() {
                     ))}
                   </div>
                 ) : (
-                  <pre className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-                    {String(result)}
-                  </pre>
+                  <AnalysisResult data={result} mode={mode} />
                 )
               ) : (
                 <div className="flex h-full min-h-[360px] items-center justify-center text-center">
@@ -353,5 +346,94 @@ function Input({
         required
       />
     </div>
+  );
+}
+
+function AnalysisResult({ data, mode }: { data: any; mode: ToolMode }) {
+  if (!data || typeof data !== "object") {
+    return <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{String(data)}</p>;
+  }
+
+  const isJobMatch = mode === "job";
+  const score = Number(isJobMatch ? data.overall_score : data.quality_score) || 0;
+  const summary = isJobMatch ? data.summary : data.feedback;
+  const scoreColor = score >= 80 ? "from-emerald-500 to-teal-500" : score >= 60 ? "from-amber-400 to-orange-500" : "from-rose-500 to-pink-500";
+
+  return (
+    <div className="space-y-5">
+      <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${scoreColor} p-6 text-white shadow-xl`}>
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/15" />
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-white/80">
+          {isJobMatch ? "Match score" : "Resume score"}
+        </p>
+        <div className="mt-2 flex items-end gap-2">
+          <span className="text-6xl font-black leading-none">{score}</span>
+          <span className="mb-1 text-xl font-bold text-white/75">/100</span>
+        </div>
+        {data.recommendation && (
+          <span className="mt-4 inline-flex rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur">
+            {data.recommendation}
+          </span>
+        )}
+      </div>
+
+      {summary && (
+        <ResultCard icon="✦" title="Career Coach Summary" colors="border-violet-200 bg-violet-50 text-violet-950">
+          <p className="text-sm leading-7 text-slate-700">{summary}</p>
+        </ResultCard>
+      )}
+
+      {isJobMatch ? (
+        <>
+          <ResultList title="Your strengths" items={data.strengths} colors="border-emerald-200 bg-emerald-50 text-emerald-950" bullet="✓" />
+          <ResultList title="Gaps to close" items={data.gaps} colors="border-amber-200 bg-amber-50 text-amber-950" bullet="→" />
+          <ResultList title="Missing keywords" items={data.missing_keywords} colors="border-blue-200 bg-blue-50 text-blue-950" bullet="#" compact />
+        </>
+      ) : (
+        <>
+          {data.rewrite_ats && (
+            <ResultCard icon="◎" title="ATS Game Plan" colors="border-blue-200 bg-blue-50 text-blue-950">
+              <p className="text-sm leading-7 text-slate-700">{data.rewrite_ats}</p>
+            </ResultCard>
+          )}
+          {data.rewrite_strong && (
+            <ResultCard icon="↗" title="Make It Stand Out" colors="border-fuchsia-200 bg-fuchsia-50 text-fuchsia-950">
+              <p className="text-sm leading-7 text-slate-700">{data.rewrite_strong}</p>
+            </ResultCard>
+          )}
+          <ResultList title="Priority improvements" items={data.suggestions} colors="border-amber-200 bg-amber-50 text-amber-950" bullet="→" />
+          <ResultList title="Numbers to add" items={data.quantification_suggestions} colors="border-emerald-200 bg-emerald-50 text-emerald-950" bullet="+" />
+        </>
+      )}
+    </div>
+  );
+}
+
+function ResultCard({ icon, title, colors, children }: { icon: string; title: string; colors: string; children: React.ReactNode }) {
+  return (
+    <section className={`rounded-2xl border p-5 ${colors}`}>
+      <h3 className="mb-3 flex items-center gap-2 text-base font-black">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/80 shadow-sm">{icon}</span>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function ResultList({ title, items, colors, bullet, compact = false }: { title: string; items?: string[]; colors: string; bullet: string; compact?: boolean }) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  return (
+    <ResultCard icon={bullet} title={title} colors={colors}>
+      <div className={compact ? "flex flex-wrap gap-2" : "space-y-2"}>
+        {items.map((item, index) => compact ? (
+          <span key={index} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm">{item}</span>
+        ) : (
+          <div key={index} className="flex gap-3 rounded-xl bg-white/70 p-3 text-sm leading-6 text-slate-700">
+            <span className="font-black">{bullet}</span><span>{item}</span>
+          </div>
+        ))}
+      </div>
+    </ResultCard>
   );
 }
