@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppNavbar from "../../components/AppNavbar";
+import { apiFetch } from "../../lib/api";
 
 type Status = "applied" | "pending" | "interview" | "rejected" | "accepted";
 
@@ -18,6 +19,7 @@ type Application = {
 
 export default function DashboardPage() {
   const [applications, setApplications] = useState<Application[]>([]);
+  const [profileCompleteness, setProfileCompleteness] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -46,6 +48,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchApplications();
+    apiFetch<{ completeness: number }>("/profile/")
+      .then((profile) => setProfileCompleteness(profile.completeness))
+      .catch(() => setProfileCompleteness(null));
   }, []);
 
   const stats = useMemo(() => {
@@ -109,6 +114,10 @@ export default function DashboardPage() {
           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
             {error}
           </div>
+        )}
+
+        {profileCompleteness !== null && profileCompleteness < 100 && (
+          <ProfileCompletionPrompt percentage={profileCompleteness} />
         )}
 
         <section className="grid gap-4 md:grid-cols-4">
@@ -282,4 +291,47 @@ function statusStyle(status: Status) {
     default:
       return "bg-slate-50 text-slate-700";
   }
+}
+
+function ProfileCompletionPrompt({ percentage }: { percentage: number }) {
+  const radius = 46;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <section className="relative mb-8 overflow-hidden rounded-[2rem] border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-blue-50 p-6 shadow-xl shadow-blue-100/60">
+      <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-200/40 blur-3xl" />
+      <div className="relative flex flex-col items-center gap-6 md:flex-row">
+        <div className="relative h-28 w-28 shrink-0">
+          <svg className="h-28 w-28 -rotate-90" viewBox="0 0 112 112" aria-label={`Profile ${percentage}% complete`}>
+            <circle cx="56" cy="56" r={radius} fill="white" stroke="#e2e8f0" strokeWidth="9" />
+            <circle
+              cx="56" cy="56" r={radius} fill="none" stroke="url(#profile-progress)"
+              strokeWidth="9" strokeLinecap="round" strokeDasharray={circumference}
+              strokeDashoffset={offset} className="transition-all duration-700"
+            />
+            <defs><linearGradient id="profile-progress"><stop stopColor="#7c3aed" /><stop offset="1" stopColor="#2563eb" /></linearGradient></defs>
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-black text-slate-950">{percentage}%</span>
+            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">complete</span>
+          </div>
+        </div>
+
+        <div className="flex-1 text-center md:text-left">
+          <span className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-wide text-violet-700">
+            Get the most out of Career Copilot
+          </span>
+          <h2 className="mt-3 text-2xl font-black">Complete your career profile</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            The more Career Coach knows about your experience, skills, and target roles, the more specific its weekly plans, application strategy, and interview preparation can be.
+          </p>
+        </div>
+
+        <Link href="/profile" className="shrink-0 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3 text-center font-bold text-white shadow-lg shadow-blue-200 transition hover:scale-105">
+          Complete my profile
+        </Link>
+      </div>
+    </section>
+  );
 }

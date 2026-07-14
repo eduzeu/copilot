@@ -23,6 +23,9 @@ class User(Base):
         cascade="all, delete-orphan"
     )
     resumes: Mapped[list["Resume"]] = relationship(
-    back_populates="owner",
-    cascade="all, delete-orphan"
-)
+        back_populates="owner",
+        cascade="all, delete-orphan"
+    )
+    career_profile = relationship(
+        "CareerProfile", back_populates="owner", cascade="all, delete-orphan", uselist=False
+    )

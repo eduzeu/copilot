@@ -7,6 +7,8 @@ const links = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/applications", label: "Applications" },
   { href: "/resumes", label: "AI Tools" },
+  { href: "/coach", label: "Career Coach" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export default function AppNavbar() {
@@ -25,7 +27,7 @@ export default function AppNavbar() {
         <span className="font-black text-slate-950">Career Copilot</span>
       </Link>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {links.map((link) => {
           const active = pathname === link.href;
 

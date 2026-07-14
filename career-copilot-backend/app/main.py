@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, applications, resumes, analysis, coach, dashboard, users
+from app.api.routes import auth, applications, resumes, analysis, coach, dashboard, profile, users
 from app.core.config import settings
 
 app = FastAPI(title="Career Copilot API")
@@ -21,6 +21,7 @@ app.include_router(analysis.router)
 app.include_router(coach.router)
 app.include_router(dashboard.router)
 app.include_router(users.router)
+app.include_router(profile.router)
 
 
 @app.get("/health")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import AppNavbar from "../../components/AppNavbar";
 
 type ToolMode = "resume" | "job" | "coach";
@@ -124,13 +125,18 @@ export default function AIToolsPage() {
           </p>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
+        <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <ToolCard
             active={mode === "resume"}
             title="Resume Feedback"
             description="Upload your resume and get feedback."
             onClick={() => resetMode("resume")}
           />
+
+          <Link href="/coach" className="rounded-3xl border border-slate-200 bg-white/80 p-6 text-left text-slate-950 shadow-xl transition hover:scale-[1.02]">
+            <h3 className="text-xl font-black">Career Coach</h3>
+            <p className="mt-2 text-sm text-slate-500">Get a weekly plan and personalized job-search advice.</p>
+          </Link>
 
           <ToolCard
             active={mode === "job"}
