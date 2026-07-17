@@ -2,6 +2,7 @@ import json
 from typing import Optional
 
 from google import genai
+from google.genai import errors
 
 from app.core.config import settings
 
@@ -9,11 +10,20 @@ from app.core.config import settings
 MODEL = "gemini-2.5-flash"
 
 
+class LLMRateLimitError(RuntimeError):
+    """Raised when the configured AI provider has exhausted its quota."""
+
+
+class LLMProviderError(RuntimeError):
+    """Raised when the AI provider is temporarily unavailable."""
+
+
 def call_llm(
     prompt: str,
     system_prompt: Optional[str] = None,
     max_tokens: int = 1024,
     json_response: bool = False,
+    thinking_budget: int | None = None,
 ) -> str:
     full_prompt = prompt
 
@@ -32,13 +42,28 @@ def call_llm(
         # Gemini 2.5 thinking tokens share the output budget. Resume analysis
         # needs the budget for the JSON payload itself.
         config["thinking_config"] = {"thinking_budget": 0}
+    elif thinking_budget is not None:
+        config["thinking_config"] = {"thinking_budget": thinking_budget}
 
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=full_prompt,
-        config=config,
-    )
+    try:
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=full_prompt,
+            config=config,
+        )
+    except errors.ClientError as exc:
+        status_code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
+        if status_code == 429 or "RESOURCE_EXHAUSTED" in str(exc):
+            raise LLMRateLimitError(
+                "Career Coach has reached today's Gemini free-tier limit. "
+                "Please try again after the quota resets."
+            ) from exc
+        raise LLMProviderError("The AI provider rejected the request. Please try again.") from exc
+    except errors.ServerError as exc:
+        raise LLMProviderError("The AI provider is temporarily unavailable. Please try again shortly.") from exc
 
+    if not response.text:
+        raise LLMProviderError("The AI provider returned an empty response. Please try again.")
     return response.text
 
 

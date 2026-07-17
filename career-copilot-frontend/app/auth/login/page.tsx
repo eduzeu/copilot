@@ -51,7 +51,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-white flex items-center justify-center px-6">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-8 sm:px-6">
       {/* Background blur gradients */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-[-120px] right-[-120px] h-[420px] w-[420px] rounded-full bg-violet-300 blur-3xl opacity-40" />
@@ -76,7 +76,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-[2rem] border border-slate-200 bg-white/80 backdrop-blur-xl shadow-2xl p-8">
+        <div className="surface-card rounded-[2rem] p-5 sm:p-8">
           <div className="mb-6">
             <h2 className="text-3xl font-black text-slate-950">
               Welcome back
@@ -98,7 +98,7 @@ export default function LoginPage() {
                 placeholder="example@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="field-control py-4"
                 required
               />
             </div>
@@ -113,7 +113,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="field-control py-4"
                 required
               />
             </div>

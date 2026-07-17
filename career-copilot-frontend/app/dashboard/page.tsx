@@ -55,8 +55,7 @@ export default function DashboardPage() {
 
   const stats = useMemo(() => {
     const total = applications.length;
-    const applied = applications.filter((a) => a.status === "applied").length;
-    const pending = applications.filter((a) => a.status === "pending").length;
+    const applied = applications.filter((a) => a.status === "applied" || a.status === "pending").length;
     const interviews = applications.filter((a) => a.status === "interview").length;
     const accepted = applications.filter((a) => a.status === "accepted").length;
     const rejected = applications.filter((a) => a.status === "rejected").length;
@@ -70,7 +69,6 @@ export default function DashboardPage() {
     return {
       total,
       applied,
-      pending,
       interviews,
       accepted,
       rejected,
@@ -82,20 +80,19 @@ export default function DashboardPage() {
   const recentApplications = applications.slice(0, 5);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-white px-6 py-8 text-slate-950">
+    <main className="app-page text-slate-950">
       <div className="absolute inset-0 -z-10">
         <div className="absolute right-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full bg-violet-300 opacity-40 blur-3xl" />
         <div className="absolute bottom-[-120px] left-[-120px] h-[420px] w-[420px] rounded-full bg-blue-300 opacity-40 blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-7xl">
+      <div className="app-container">
         <AppNavbar />
-        <nav className="mb-10 flex items-center justify-between">
+        <header className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-violet-600">
-            </p>
-            <h1 className="mt-2 text-4xl font-black tracking-tight">
-              Dashboard
+            <p className="eyebrow">Job search command center</p>
+            <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] sm:text-5xl">
+              Your career <span className="gradient-text">at a glance.</span>
             </h1>
             <p className="mt-2 text-slate-600">
               Your job search performance at a glance.
@@ -108,7 +105,7 @@ export default function DashboardPage() {
           >
             Track applications
           </Link>
-        </nav>
+        </header>
 
         {error && (
           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
@@ -120,7 +117,7 @@ export default function DashboardPage() {
           <ProfileCompletionPrompt percentage={profileCompleteness} />
         )}
 
-        <section className="grid gap-4 md:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard title="Total Applications" value={stats.total} subtitle="Roles tracked" />
           <StatCard title="Interviews" value={stats.interviews} subtitle="Interview stage" />
           <StatCard title="Response Rate" value={`${stats.responseRate}%`} subtitle="Any response received" />
@@ -140,7 +137,6 @@ export default function DashboardPage() {
 
             <div className="space-y-5">
               <ProgressRow label="Applied" value={stats.applied} total={stats.total} />
-              <ProgressRow label="Pending" value={stats.pending} total={stats.total} />
               <ProgressRow label="Interview" value={stats.interviews} total={stats.total} />
               <ProgressRow label="Accepted" value={stats.accepted} total={stats.total} />
               <ProgressRow label="Rejected" value={stats.rejected} total={stats.total} />
@@ -204,7 +200,7 @@ export default function DashboardPage() {
               {recentApplications.map((app) => (
                 <div
                   key={app.id}
-                  className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                  className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="font-black">{app.company}</p>
@@ -234,7 +230,8 @@ function StatCard({
   subtitle: string;
 }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-xl backdrop-blur-xl">
+    <div className="surface-card group relative overflow-hidden rounded-3xl p-6 transition duration-300 hover:-translate-y-1 hover:border-violet-200">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400 opacity-0 transition group-hover:opacity-100" />
       <p className="text-sm font-semibold text-slate-500">{title}</p>
       <p className="mt-2 text-4xl font-black">{value}</p>
       <p className="mt-1 text-xs text-slate-400">{subtitle}</p>
@@ -328,7 +325,7 @@ function ProfileCompletionPrompt({ percentage }: { percentage: number }) {
           </p>
         </div>
 
-        <Link href="/profile" className="shrink-0 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3 text-center font-bold text-white shadow-lg shadow-blue-200 transition hover:scale-105">
+        <Link href="/profile" className="w-full shrink-0 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3 text-center font-bold text-white shadow-lg shadow-blue-200 transition hover:scale-105 md:w-auto">
           Complete my profile
         </Link>
       </div>

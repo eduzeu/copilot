@@ -80,14 +80,14 @@ export default function ProfilePage() {
   if (loading) return <main className="p-10 text-slate-600">Loading your career profile...</main>;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-8 text-slate-950">
-      <div className="mx-auto max-w-7xl"><AppNavbar />
+    <main className="app-page text-slate-950">
+      <div className="app-container"><AppNavbar />
         <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
-          <div><p className="text-sm font-bold text-violet-600">Persistent AI context</p>
-            <h1 className="mt-2 text-4xl font-black">Career Profile</h1>
+          <div><p className="eyebrow">Persistent AI context</p>
+            <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] sm:text-5xl">Your career, <span className="gradient-text">in context.</span></h1>
             <p className="mt-2 max-w-2xl text-slate-600">Tell Career Copilot where you are and where you want to go. You can update this anytime.</p>
           </div>
-          <div className="min-w-64 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:min-w-64 sm:w-auto">
             <div className="flex justify-between text-sm font-bold"><span>Profile completeness</span><span>{profile.completeness || 0}%</span></div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-gradient-to-r from-violet-600 to-blue-600" style={{ width: `${profile.completeness || 0}%` }} /></div>
           </div>
@@ -150,7 +150,7 @@ export default function ProfilePage() {
             <Text label="Salary expectations (optional)" value={profile.salary_expectations} onChange={(v) => field("salary_expectations", v)} />
           </Section>
         </div>
-        <div className="sticky bottom-4 mt-6 flex items-center justify-end gap-4 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-xl backdrop-blur">
+        <div className="sticky bottom-2 mt-6 flex flex-col items-stretch gap-3 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-xl backdrop-blur sm:bottom-4 sm:flex-row sm:items-center sm:justify-end sm:gap-4 sm:p-4">
           {message && <p className="mr-auto text-sm font-semibold text-slate-600">{message}</p>}
           <button onClick={save} disabled={saving} className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-7 py-3 font-bold text-white disabled:opacity-50">{saving ? "Saving..." : "Save profile"}</button>
         </div>
@@ -162,10 +162,10 @@ export default function ProfilePage() {
 const levelOptions = [["not_started", "Not started"], ["beginner", "Beginner"], ["intermediate", "Intermediate"], ["advanced", "Advanced"]];
 const split = (value: string) => value.split(",").map((x) => x.trim()).filter(Boolean);
 
-function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) { return <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-2xl font-black">{title}</h2><p className="mt-1 text-sm text-slate-500">{subtitle}</p><div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{children}</div></section>; }
-function Text({ label, value, onChange, placeholder = "" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) { return <label className="block text-sm font-bold text-slate-700">{label}<input value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-violet-500" /></label>; }
-function NumberField({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) { return <label className="block text-sm font-bold text-slate-700">{label}<input type="number" value={value ?? ""} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-violet-500" /></label>; }
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[][] }) { return <label className="block text-sm font-bold text-slate-700">{label}<select value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-violet-500">{options.map(([v, n]) => <option key={v} value={v}>{n}</option>)}</select></label>; }
+function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) { return <section className="surface-card rounded-3xl p-6 md:p-7"><h2 className="text-2xl font-black tracking-tight">{title}</h2><p className="mt-1 text-sm text-slate-500">{subtitle}</p><div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{children}</div></section>; }
+function Text({ label, value, onChange, placeholder = "" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) { return <label className="block text-sm font-bold text-slate-700">{label}<input value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="field-control mt-2 font-normal" /></label>; }
+function NumberField({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) { return <label className="block text-sm font-bold text-slate-700">{label}<input type="number" value={value ?? ""} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)} className="field-control mt-2 font-normal" /></label>; }
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[][] }) { return <label className="block text-sm font-bold text-slate-700">{label}<select value={value} onChange={(e) => onChange(e.target.value)} className="field-control mt-2 font-normal">{options.map(([v, n]) => <option key={v} value={v}>{n}</option>)}</select></label>; }
 function ListField({ label, value, onChange, placeholder = "Comma-separated" }: { label: string; value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
   const [draft, setDraft] = useState(() => (value || []).join(", "));
 
@@ -174,5 +174,5 @@ function ListField({ label, value, onChange, placeholder = "Comma-separated" }: 
     onChange(split(raw));
   }
 
-  return <label className="block text-sm font-bold text-slate-700">{label} (comma separated)<input value={draft} onChange={(e) => update(e.target.value)} onBlur={() => setDraft((current) => split(current).join(", "))} placeholder={placeholder} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-violet-500" /></label>;
+  return <label className="block text-sm font-bold text-slate-700">{label} <span className="font-medium text-slate-400">· comma separated</span><input value={draft} onChange={(e) => update(e.target.value)} onBlur={() => setDraft((current) => split(current).join(", "))} placeholder={placeholder} className="field-control mt-2 font-normal" /></label>;
 }

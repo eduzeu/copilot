@@ -18,16 +18,22 @@ RESUME:
 
 Return a JSON object with exactly these fields:
 {{
+    "is_resume": <true only when the document is actually a resume or CV>,
     "quality_score": <integer 0-100 reflecting overall resume quality>,
     "feedback": <2-4 sentence overall summary>,
     "rewrite_ats": <short paragraph describing the highest-priority ATS rewrite strategy>,
     "rewrite_strong": <short paragraph describing how to make the resume stronger for a human reviewer>,
     "suggestions": <list of 4-6 short, specific improvements>,
     "quantification_suggestions": <list of 3-6 metrics or achievements the candidate could quantify>
-}}"""
+}}
+
+If the document is not a resume or CV, set is_resume to false, explain what the
+document appears to be in feedback, set quality_score to null, set both rewrite
+fields to null, and return empty lists. Do not score a non-resume document."""
 
     raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, max_tokens=2048)
     return {
+        "is_resume": bool(raw.get("is_resume", True)),
         "quality_score": raw.get("quality_score"),
         "feedback": raw.get("feedback"),
         "rewrite_ats": raw.get("rewrite_ats"),
@@ -164,20 +170,26 @@ JOB DESCRIPTION:
 
 Return a JSON object with exactly these fields:
 {{
+    "is_resume": <true only when the first document is actually a resume or CV>,
     "overall_score": <integer 0-100 reflecting overall resume fit for the role>,
     "summary": <2-3 sentence overall assessment>,
     "strengths": <list of 3-5 specific strengths relevant to this JD>,
     "gaps": <list of 3-5 specific gaps or missing qualifications>,
     "missing_keywords": <list of up to 10 important keywords from the JD missing in the resume>,
     "recommendation": <one of: "Strong Match", "Good Match", "Partial Match", "Weak Match">
-}}"""
+}}
+
+If the first document is not a resume or CV, set is_resume to false, explain what
+the document appears to be in summary, set overall_score to null, return empty
+lists, and set recommendation to null. Do not calculate a match score."""
 
     try:
         raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, max_tokens=1024)
         result = raw
 
         return {
-            "overall_score": int(result.get("overall_score", 0)),
+            "is_resume": bool(result.get("is_resume", True)),
+            "overall_score": int(result.get("overall_score") or 0),
             "summary": result.get("summary", ""),
             "strengths": result.get("strengths", []),
             "gaps": result.get("gaps", []),

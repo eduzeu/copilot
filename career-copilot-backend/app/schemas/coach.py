@@ -53,3 +53,15 @@ class CoachChatResponse(BaseModel):
     mode: CoachMode
     profile_completeness: int
     context_used: list[str]
+    interaction_id: int
+    strategy: str
+
+
+class CoachFeedbackRequest(BaseModel):
+    helpful: bool
+
+
+class CoachFeedbackResponse(BaseModel):
+    interaction_id: int
+    helpful: bool
+    policy_updated: bool = True

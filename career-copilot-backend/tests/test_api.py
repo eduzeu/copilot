@@ -72,3 +72,49 @@ def test_coach_chat_uses_profile_without_requiring_a_resume(client, auth_headers
     assert response.status_code == 200, response.text
     assert response.json()["mode"] == "weekly_plan"
     assert response.json()["context_used"] == ["career profile"]
+    assert response.json()["strategy"] == "direct_action"
+    assert response.json()["interaction_id"] > 0
+
+    feedback = client.put(
+        f"/coach/interactions/{response.json()['interaction_id']}/feedback",
+        headers=auth_headers,
+        json={"helpful": True},
+    )
+    assert feedback.status_code == 200, feedback.text
+    assert feedback.json()["helpful"] is True
+
+
+def test_non_resume_analysis_is_flagged_without_a_score(monkeypatch):
+    from app.services.llm_analysis import analyze_resume_general
+
+    monkeypatch.setattr(
+        "app.services.llm_analysis.call_llm_json",
+        lambda *args, **kwargs: {
+            "is_resume": False,
+            "quality_score": None,
+            "feedback": "This is a financial aid letter, not a resume.",
+            "rewrite_ats": None,
+            "rewrite_strong": None,
+            "suggestions": [],
+            "quantification_suggestions": [],
+        },
+    )
+    result = analyze_resume_general("financial aid letter contents")
+    assert result["is_resume"] is False
+    assert result["quality_score"] is None
+
+
+def test_coach_quota_error_returns_429(client, auth_headers, monkeypatch):
+    from app.services.llm_service import LLMRateLimitError
+
+    def quota_error(*args, **kwargs):
+        raise LLMRateLimitError("Career Coach has reached today's Gemini free-tier limit.")
+
+    monkeypatch.setattr("app.api.routes.coach.chat_with_career_coach", quota_error)
+    response = client.post(
+        "/coach/chat",
+        headers=auth_headers,
+        json={"message": "Help me plan my week"},
+    )
+    assert response.status_code == 429
+    assert "free-tier limit" in response.json()["detail"]

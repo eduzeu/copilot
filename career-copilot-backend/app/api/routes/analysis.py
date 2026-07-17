@@ -7,12 +7,19 @@ from app.schemas.analysis import AnalyzedResumeRequest, AnalysisRunOut
 from app.services.llm_analysis import analyze_bullet_general, analyze_bullet_with_llm, analyze_resume_general, score_resume_against_jd  
 from app.core.config import settings
 from app.utils.text_extract import extract_text
+from app.services.llm_service import LLMRateLimitError
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 
 def _run_ai(operation, *args):
     try:
         return operation(*args)
+    except LLMRateLimitError as exc:
+        raise HTTPException(
+            status_code=429,
+            detail=str(exc),
+            headers={"Retry-After": "3600"},
+        ) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 

@@ -9,10 +9,10 @@ export default function LandingPage() {
           <div className="absolute bottom-[-140px] left-[-100px] h-[420px] w-[420px] rounded-full bg-blue-300 blur-3xl opacity-40" />
         </div>
 
-        <nav className="w-full flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-500 shadow-lg" />
-            <span className="font-bold text-xl">Career Copilot</span>
+            <span className="hidden text-xl font-bold sm:block">Career Copilot</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -26,13 +26,13 @@ export default function LandingPage() {
           </div>
         </nav>
 
-        <div className="flex-1 grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto px-8 py-16">
+        <div className="mx-auto grid max-w-7xl flex-1 items-center gap-10 px-4 py-10 sm:px-6 sm:py-16 lg:grid-cols-2 lg:gap-12 lg:px-8">
           <div>
             <div className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 mb-6">
               AI-powered job search assistant
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-tight">
+            <h1 className="text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl md:text-6xl xl:text-7xl">
               Land your next role with an{" "}
               <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
                 AI career copilot.
@@ -44,7 +44,7 @@ export default function LandingPage() {
               and improve your job search workflow.
             </p>
 
-            <div className="mt-8 flex gap-4">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
               <Link href="/auth/account" className="rounded-full bg-gradient-to-r from-violet-600 to-blue-600 px-8 py-4 text-white font-bold">
                 Start for free
               </Link>
@@ -59,7 +59,7 @@ export default function LandingPage() {
             <p className="text-sm text-slate-500">Dashboard</p>
             <h2 className="text-2xl font-bold mb-6">Job Search Overview</h2>
 
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Applications</p>
                 <p className="text-2xl font-black">14</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AppNavbar from "../../components/AppNavbar";
 
 type Status = "applied" | "pending" | "interview" | "rejected" | "accepted";
@@ -14,7 +14,7 @@ type Application = {
   status: Status;
 };
 
-const statuses: Status[] = ["applied", "pending", "interview", "rejected", "accepted"];
+const statuses: Status[] = ["applied", "interview", "rejected", "accepted"];
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -164,19 +164,20 @@ export default function ApplicationsPage() {
   }, [applications]);
 
   return (
-    <main className="min-h-screen bg-white text-slate-950 px-6 py-8">
+    <main className="app-page text-slate-950">
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-[-120px] right-[-120px] h-[420px] w-[420px] rounded-full bg-violet-300 blur-3xl opacity-40" />
         <div className="absolute bottom-[-120px] left-[-120px] h-[420px] w-[420px] rounded-full bg-blue-300 blur-3xl opacity-40" />
       </div>
 
-      <div className="mx-auto max-w-7xl">
+      <div className="app-container">
         <AppNavbar />
 
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="mt-2 text-4xl font-black tracking-tight">
-              Job Applications
+            <p className="eyebrow">Your opportunity pipeline</p>
+            <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] sm:text-5xl">
+              Every role. <span className="gradient-text">One clear view.</span>
             </h1>
             <p className="mt-2 text-slate-600">
               Track every role and status in one clean dashboard.
@@ -190,17 +191,17 @@ export default function ApplicationsPage() {
           </div>
         )}
 
-        <section className="mb-8 grid gap-4 md:grid-cols-4">
+        <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Total Applications" value={stats.total} />
           <StatCard label="Interviews" value={stats.interviews} />
           <StatCard label="Accepted" value={stats.accepted} />
           <StatCard label="Rejected" value={stats.rejected} />
         </section>
 
-        <section className="grid gap-8 lg:grid-cols-[420px_1fr]">
+        <section className="grid gap-6 xl:grid-cols-[minmax(340px,420px)_1fr] xl:gap-8">
           <form
             onSubmit={createApplication}
-            className="h-fit rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-2xl backdrop-blur-xl"
+            className="surface-card h-fit rounded-[2rem] p-6"
           >
             <h2 className="text-2xl font-black">Add application</h2>
             <p className="mt-1 text-sm text-slate-500">
@@ -220,7 +221,7 @@ export default function ApplicationsPage() {
                   type="date"
                   value={dateApplied}
                   onChange={(e) => setDateApplied(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="field-control"
                   required
                 />
               </div>
@@ -232,7 +233,7 @@ export default function ApplicationsPage() {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as Status)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="field-control"
                 >
                   {statuses.map((s) => (
                     <option key={s} value={s}>
@@ -251,8 +252,8 @@ export default function ApplicationsPage() {
             </div>
           </form>
 
-          <section className="rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-2xl backdrop-blur-xl">
-            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <section className="surface-card rounded-[2rem] p-6">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-2xl font-black">Tracked roles</h2>
                 <p className="mt-1 text-sm text-slate-500">
@@ -263,7 +264,7 @@ export default function ApplicationsPage() {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as "all" | Status)}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="field-control w-full text-sm font-semibold sm:w-auto"
               >
                 <option value="all">All statuses</option>
                 {statuses.map((s) => (
@@ -286,9 +287,9 @@ export default function ApplicationsPage() {
                 filteredApplications.map((app) => (
                   <div
                     key={app.id}
-                    className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:shadow-lg"
+                    className="group rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-xl"
                   >
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex items-center gap-3">
                           <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-500" />
@@ -309,24 +310,11 @@ export default function ApplicationsPage() {
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-3 md:items-end">
-                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyle(app.status)}`}>
-                          {formatStatus(app.status)}
-                        </span>
-
-                        <select
+                      <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:items-end">
+                        <StatusSelect
                           value={app.status}
-                          onChange={(e) =>
-                            updateStatus(app.id, e.target.value as Status)
-                          }
-                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
-                        >
-                          {statuses.map((s) => (
-                            <option key={s} value={s}>
-                              {formatStatus(s)}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(nextStatus) => updateStatus(app.id, nextStatus)}
+                        />
 
                         <button
                           onClick={() => deleteApplication(app.id)}
@@ -349,7 +337,7 @@ export default function ApplicationsPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-xl backdrop-blur-xl">
+    <div className="surface-card rounded-3xl p-6">
       <p className="text-sm font-semibold text-slate-500">{label}</p>
       <p className="mt-2 text-4xl font-black">{value}</p>
     </div>
@@ -376,7 +364,7 @@ function Input({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        className="field-control"
         required
       />
     </div>
@@ -402,4 +390,42 @@ function statusStyle(status: Status) {
     default:
       return "bg-slate-50 text-slate-700";
   }
+}
+
+function StatusSelect({ value, onChange }: { value: Status; onChange: (status: Status) => void }) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const displayedValue: Status = value === "pending" ? "applied" : value;
+
+  function closeOtherMenus() {
+    document.querySelectorAll<HTMLDetailsElement>("details[data-status-menu][open]").forEach((menu) => {
+      if (menu !== detailsRef.current) menu.open = false;
+    });
+  }
+
+  function choose(status: Status) {
+    onChange(status);
+    if (detailsRef.current) detailsRef.current.open = false;
+  }
+
+  return (
+    <details ref={detailsRef} data-status-menu className="group/status w-44">
+      <summary onClick={closeOtherMenus} className={`flex min-w-36 cursor-pointer list-none items-center justify-between gap-3 rounded-full border border-current/10 px-4 py-2.5 text-sm font-bold shadow-sm transition hover:shadow-md [&::-webkit-details-marker]:hidden ${statusStyle(displayedValue)}`}>
+        {formatStatus(displayedValue)}
+        <span className="text-xs transition group-open/status:rotate-180">⌄</span>
+      </summary>
+      <div className="mt-2 max-h-72 w-44 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-300/40">
+        {statuses.map((status) => (
+          <button
+            key={status}
+            type="button"
+            onClick={() => choose(status)}
+            className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-sm font-semibold transition ${status === displayedValue ? statusStyle(status) : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"}`}
+          >
+            {formatStatus(status)}
+            {status === displayedValue && <span aria-hidden="true">✓</span>}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
 }

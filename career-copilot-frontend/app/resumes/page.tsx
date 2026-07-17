@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import AppNavbar from "../../components/AppNavbar";
+import AILoader from "../../components/AILoader";
 
 type ToolMode = "resume" | "job" | "coach";
 
@@ -104,39 +104,32 @@ export default function AIToolsPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-white px-6 py-8 text-slate-950">
+    <main className="app-page text-slate-950">
       <div className="absolute inset-0 -z-10">
         <div className="absolute right-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full bg-violet-300 opacity-40 blur-3xl" />
         <div className="absolute bottom-[-120px] left-[-120px] h-[420px] w-[420px] rounded-full bg-blue-300 opacity-40 blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-7xl">
+      <div className="app-container">
         <AppNavbar />
 
         <div className="mb-8">
-          <p className="text-sm font-semibold text-violet-600">
-            Career Copilot
-          </p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight">
-            AI Career Tools
+          <p className="eyebrow">Career Copilot intelligence</p>
+          <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] sm:text-5xl">
+            Sharper tools. <span className="gradient-text">Stronger moves.</span>
           </h1>
           <p className="mt-2 text-slate-600">
             Upload your resume, compare it to jobs, or generate interview questions.
           </p>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid gap-4 md:grid-cols-3">
           <ToolCard
             active={mode === "resume"}
             title="Resume Feedback"
             description="Upload your resume and get feedback."
             onClick={() => resetMode("resume")}
           />
-
-          <Link href="/coach" className="rounded-3xl border border-slate-200 bg-white/80 p-6 text-left text-slate-950 shadow-xl transition hover:scale-[1.02]">
-            <h3 className="text-xl font-black">Career Coach</h3>
-            <p className="mt-2 text-sm text-slate-500">Get a weekly plan and personalized job-search advice.</p>
-          </Link>
 
           <ToolCard
             active={mode === "job"}
@@ -156,7 +149,7 @@ export default function AIToolsPage() {
         <section className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
           <form
             onSubmit={handleSubmit}
-            className="rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-2xl backdrop-blur-xl"
+            className="surface-card rounded-[2rem] p-6"
           >
             <h2 className="text-2xl font-black">
               {mode === "resume" && "Upload Resume"}
@@ -249,7 +242,7 @@ export default function AIToolsPage() {
             </div>
           </form>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-2xl backdrop-blur-xl">
+          <div className="surface-card rounded-[2rem] p-6">
             <h2 className="text-2xl font-black">AI Output</h2>
             <p className="mt-1 text-sm text-slate-500">
               Your results will appear here.
@@ -257,7 +250,7 @@ export default function AIToolsPage() {
 
             <div className="mt-6 min-h-[420px] rounded-3xl border border-slate-100 bg-slate-50 p-5">
               {loading ? (
-                <p className="text-slate-500">Thinking...</p>
+                <AILoader messages={mode === "coach" ? ["Reviewing the role and company", "Choosing relevant interview themes", "Balancing technical depth and clarity", "Preparing your question set"] : mode === "job" ? ["Reading your résumé", "Comparing it with the role", "Identifying strengths and missing signals", "Building targeted recommendations"] : ["Reading your résumé", "Evaluating clarity and impact", "Looking for measurable achievements", "Preparing your feedback"]} />
               ) : result ? (
                 mode === "coach" && Array.isArray(result) ? (
                   <div className="space-y-4">
@@ -361,6 +354,14 @@ function AnalysisResult({ data, mode }: { data: any; mode: ToolMode }) {
   }
 
   const isJobMatch = mode === "job";
+  if (data.is_resume === false) {
+    const summary = isJobMatch ? data.summary : data.feedback;
+    return (
+      <ResultCard icon="!" title="This document is not a resume" colors="border-amber-200 bg-amber-50 text-amber-950">
+        <p className="text-sm leading-7 text-slate-700">{summary || "The uploaded document could not be evaluated as a resume. Please upload a resume or CV."}</p>
+      </ResultCard>
+    );
+  }
   const score = Number(isJobMatch ? data.overall_score : data.quality_score) || 0;
   const summary = isJobMatch ? data.summary : data.feedback;
   const scoreColor = score >= 80 ? "from-emerald-500 to-teal-500" : score >= 60 ? "from-amber-400 to-orange-500" : "from-rose-500 to-pink-500";
