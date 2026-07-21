@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { apiFetch } from "../lib/api";
 
 const links = [
   { href: "/dashboard", label: "Overview" },
@@ -15,7 +16,8 @@ export default function AppNavbar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  function logout() {
+  async function logout() {
+    await apiFetch<void>("/auth/logout", { method: "POST", redirectOnUnauthorized: false }).catch(() => undefined);
     localStorage.removeItem("token");
     router.push("/auth/login");
   }

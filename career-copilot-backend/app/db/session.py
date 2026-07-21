@@ -10,11 +10,16 @@ elif database_url.startswith("postgresql://"):
 elif database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
 
+connect_args = (
+    {"check_same_thread": False}
+    if settings.database_url.startswith("sqlite")
+    else {"connect_timeout": settings.database_connect_timeout_seconds}
+)
+
 engine = create_engine(
     database_url,
-    connect_args={"check_same_thread": False}
-    if settings.database_url.startswith("sqlite")
-    else {}
+    connect_args=connect_args,
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

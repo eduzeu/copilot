@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AppNavbar from "../../components/AppNavbar";
 import AILoader from "../../components/AILoader";
+import { apiFetch } from "../../lib/api";
 
 type ToolMode = "resume" | "job" | "coach";
 
@@ -18,8 +19,6 @@ export default function AIToolsPage() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -28,14 +27,9 @@ export default function AIToolsPage() {
     setResult(null);
 
     try {
-      const token = localStorage.getItem("token");
-
       let endpoint = "";
       let options: RequestInit = {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       };
 
       if (mode === "resume") {
@@ -64,11 +58,6 @@ export default function AIToolsPage() {
       if (mode === "coach") {
         endpoint = "/coach/questions";
 
-        options.headers = {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        };
-
         options.body = JSON.stringify({
           role,
           company,
@@ -78,12 +67,7 @@ export default function AIToolsPage() {
         });
       }
 
-      const res = await fetch(`${API_URL}${endpoint}`, options);
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "AI request failed");
-      }
+      const data = await apiFetch<any>(endpoint, { ...options, timeoutMs: 60000 });
 
       if (mode === "coach") {
         setResult(data.questions || []);

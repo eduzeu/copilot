@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import AppNavbar from "../../components/AppNavbar";
+import { apiFetch } from "../../lib/api";
 
 type Status = "applied" | "pending" | "interview" | "rejected" | "accepted";
 
@@ -28,24 +29,9 @@ export default function ApplicationsPage() {
   const [filter, setFilter] = useState<"all" | Status>("all");
   const [error, setError] = useState("");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
   async function fetchApplications() {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/applications/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "Failed to load applications");
-      }
-
+      const data = await apiFetch<Application[]>("/applications/");
       setApplications(data);
     } catch (err: any) {
       setError(err.message);
@@ -57,14 +43,8 @@ export default function ApplicationsPage() {
 
     try {
       setError("");
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/applications/`, {
+      await apiFetch<Application>("/applications/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           company,
           role_title,
@@ -73,12 +53,6 @@ export default function ApplicationsPage() {
           location,
         }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "Failed to create application");
-      }
 
       setCompany("");
       setRole("");
@@ -94,24 +68,12 @@ export default function ApplicationsPage() {
 
   async function updateStatus(id: number, newStatus: Status) {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/applications/${id}`, {
+      await apiFetch<Application>(`/applications/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           status: newStatus,
         }),
       });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.detail || "Failed to update status");
-      }
 
       setApplications((prev) =>
         prev.map((app) =>
@@ -125,19 +87,9 @@ export default function ApplicationsPage() {
 
   async function deleteApplication(id: number) {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/applications/${id}`, {
+      await apiFetch<void>(`/applications/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.detail || "Failed to delete application");
-      }
 
       setApplications((prev) => prev.filter((app) => app.id !== id));
     } catch (err: any) {

@@ -8,12 +8,13 @@ from app.services.llm_analysis import analyze_bullet_general, analyze_bullet_wit
 from app.core.config import settings
 from app.utils.text_extract import extract_text
 from app.services.llm_service import LLMRateLimitError
+from app.services.ai_control import run_cached_json
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 
-def _run_ai(operation, *args):
+def _run_ai(db: Session, user_id: int, feature: str, operation, *args):
     try:
-        return operation(*args)
+        return run_cached_json(db, user_id, feature, operation, *args)
     except LLMRateLimitError as exc:
         raise HTTPException(
             status_code=429,
@@ -35,23 +36,24 @@ async def _read_resume(file: UploadFile) -> str:
 
 
 @router.post("/resume-feedback")
-async def resume_feedback(file: UploadFile = File(...), user=Depends(get_current_user)):
+async def resume_feedback(file: UploadFile = File(...), user=Depends(get_current_user), db: Session = Depends(get_db)):
     resume_text = await _read_resume(file)
-    return {"analysis": _run_ai(analyze_resume_general, resume_text)}
+    return {"analysis": _run_ai(db, user.id, "resume_feedback", analyze_resume_general, resume_text)}
 
 
 @router.post("/job-match")
-async def job_match(file: UploadFile = File(...), job_description: str = Form(...), user=Depends(get_current_user)):
+async def job_match(file: UploadFile = File(...), job_description: str = Form(...), user=Depends(get_current_user), db: Session = Depends(get_db)):
     resume_text = await _read_resume(file)
-    return {"analysis": _run_ai(score_resume_against_jd, resume_text, job_description)}
+    return {"analysis": _run_ai(db, user.id, "job_match", score_resume_against_jd, resume_text, job_description)}
 
 
 @router.post("/bullet/general")
 def analyze_bullet_general_endpoint(
     bullet: str,
     user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    result = _run_ai(analyze_bullet_general, bullet)
+    result = _run_ai(db, user.id, "bullet_feedback", analyze_bullet_general, bullet)
     return result
 
 @router.post("/bullet/llm")
@@ -59,8 +61,9 @@ def analyze_bullet_with_llm_endpoint(
     bullet: str,
     job_description: str,
     user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    result = _run_ai(analyze_bullet_with_llm, bullet, job_description)
+    result = _run_ai(db, user.id, "bullet_match", analyze_bullet_with_llm, bullet, job_description)
     return result
 
 @router.post("/score")
@@ -68,6 +71,7 @@ def score_resume_against_jd_endpoint(
     resume_text: str,
     job_description: str,
     user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    result = _run_ai(score_resume_against_jd, resume_text, job_description)
+    result = _run_ai(db, user.id, "job_match_text", score_resume_against_jd, resume_text, job_description)
     return result

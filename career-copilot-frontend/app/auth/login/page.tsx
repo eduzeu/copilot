@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "../../../lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,29 +21,17 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/auth/login`,
-        {
+      const data = await apiFetch<{ access_token: string }>("/auth/login", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify({
             email,
             password,
           }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Login failed");
-      }
-
-      localStorage.setItem("token", data.access_token);
+          redirectOnUnauthorized: false,
+        });
 
       router.push("/dashboard");
+      router.refresh();
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -1,5 +1,5 @@
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal, Optional 
 from pydantic import BaseModel, Field
 
@@ -55,6 +55,7 @@ class CoachChatResponse(BaseModel):
     context_used: list[str]
     interaction_id: int
     strategy: str
+    fallback: bool = False
 
 
 class CoachFeedbackRequest(BaseModel):
@@ -65,3 +66,28 @@ class CoachFeedbackResponse(BaseModel):
     interaction_id: int
     helpful: bool
     policy_updated: bool = True
+
+
+CoachActionStatus = Literal["pending", "completed", "skipped"]
+
+
+class CoachActionCreate(BaseModel):
+    title: str = Field(min_length=2, max_length=240)
+    due_date: date | None = None
+
+
+class CoachActionUpdate(BaseModel):
+    status: CoachActionStatus | None = None
+    outcome: str | None = Field(default=None, max_length=2000)
+
+
+class CoachActionOut(BaseModel):
+    id: int
+    title: str
+    status: CoachActionStatus
+    outcome: str | None = None
+    due_date: date | None = None
+    completed_at: datetime | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

@@ -1,3 +1,7 @@
+import re
+from datetime import datetime, timezone
+
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.schemas.coach import CoachQuestionRequest
@@ -8,6 +12,9 @@ from app.schemas.coach import CoachChatRequest
 from app.services.career_profile_service import calculate_completeness, get_or_create_profile
 from app.services.llm_service import call_llm
 from app.services.coach_learning import STRATEGY_INSTRUCTIONS, choose_strategy, record_interaction
+from app.models.coach_action import CoachAction
+from app.services.ai_control import enforce_daily_quota, record_ai_request
+from app.services.llm_service import LLMProviderError, LLMRateLimitError
 
 
 def create_coach_session(
@@ -52,6 +59,13 @@ def chat_with_career_coach(db: Session, user_id: int, req: CoachChatRequest) -> 
         .filter(Resume.user_id == user_id)
         .order_by(Resume.created_at.desc())
         .scalar()
+    )
+    recent_actions = (
+        db.query(CoachAction)
+        .filter(CoachAction.user_id == user_id)
+        .order_by(CoachAction.created_at.desc())
+        .limit(10)
+        .all()
     )
 
     profile_fields = {
@@ -131,13 +145,24 @@ Pipeline counts: {pipeline_counts}
 Latest resume text (may be empty): {(resume_text[:8000] if resume_text else '')}
 Recent conversation:
 {history}
+Recent action outcomes: {[{"action": item.title, "status": item.status, "outcome": item.outcome} for item in recent_actions]}
 
 User: {req.message}
 """.strip()
-    answer = call_llm(prompt, max_tokens=3000, thinking_budget=256)
+    enforce_daily_quota(db, user_id, "career_coach")
+    fallback = False
+    try:
+        answer = call_llm(prompt, max_tokens=3000, thinking_budget=256)
+        record_ai_request(db, user_id, "career_coach")
+    except (LLMRateLimitError, LLMProviderError):
+        record_ai_request(db, user_id, "career_coach", "fallback")
+        fallback = True
+        answer = _fallback_coaching_answer(req.mode, pipeline_counts, calculate_completeness(profile))
     interaction = record_interaction(
         db, user_id, req.mode, strategy, req.message, answer
     )
+    if req.mode == "weekly_plan":
+        _store_actions_from_answer(db, user_id, interaction.id, answer)
     context_used = ["career profile"]
     if applications:
         context_used.append("application pipeline")
@@ -150,4 +175,71 @@ User: {req.message}
         "context_used": context_used,
         "interaction_id": interaction.id,
         "strategy": strategy,
+        "fallback": fallback,
     }
+
+
+def _fallback_coaching_answer(mode: str, pipeline: dict[str, int], completeness: int) -> str:
+    if mode == "weekly_plan":
+        return (
+            "The AI service is temporarily limited, so here is a practical fallback plan.\n\n"
+            "- Complete one missing profile section so future advice has stronger context.\n"
+            "- Submit three targeted applications and tailor the top third of your résumé for each role.\n"
+            "- Complete two 45-minute interview-practice sessions tied to your target role.\n"
+            "- Contact two relevant alumni or professionals with a specific question.\n"
+            "- Review your application outcomes at the end of the week and record what changed.\n\n"
+            "## Best next move\nFinish the highest-priority incomplete profile section today."
+        )
+    return (
+        f"The AI service is temporarily limited. Your profile is {completeness}% complete and your recent "
+        f"pipeline includes {pipeline.get('applied', 0)} applied and {pipeline.get('interview', 0)} interview-stage roles. "
+        "Focus on one measurable improvement: tailor your résumé to one target role, then submit or follow up on one application."
+    )
+
+
+def _store_actions_from_answer(db: Session, user_id: int, interaction_id: int, answer: str) -> None:
+    lines = []
+    for raw in answer.splitlines():
+        match = re.match(r"^\s*(?:[-*]|\d+[.)])\s+(.+)$", raw)
+        if not match:
+            continue
+        title = re.sub(r"\*\*([^*]+)\*\*", r"\1", match.group(1)).strip()
+        title = title[:240]
+        if title and title not in lines:
+            lines.append(title)
+    for title in lines[:5]:
+        db.add(CoachAction(user_id=user_id, interaction_id=interaction_id, title=title))
+    if lines:
+        db.commit()
+
+
+def list_actions(db: Session, user_id: int) -> list[CoachAction]:
+    return (
+        db.query(CoachAction)
+        .filter(CoachAction.user_id == user_id)
+        .order_by(CoachAction.created_at.desc())
+        .limit(50)
+        .all()
+    )
+
+
+def create_action(db: Session, user_id: int, title: str, due_date=None) -> CoachAction:
+    action = CoachAction(user_id=user_id, title=title, due_date=due_date)
+    db.add(action)
+    db.commit()
+    db.refresh(action)
+    return action
+
+
+def update_action(db: Session, user_id: int, action_id: int, status: str | None, outcome: str | None) -> CoachAction:
+    action = db.query(CoachAction).filter(CoachAction.id == action_id, CoachAction.user_id == user_id).first()
+    if not action:
+        raise HTTPException(status_code=404, detail="Coach action not found")
+    if status is not None:
+        action.status = status
+        action.completed_at = datetime.now(timezone.utc) if status == "completed" else None
+    if outcome is not None:
+        action.outcome = outcome.strip() or None
+    db.commit()
+    db.refresh(action)
+    return action

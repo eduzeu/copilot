@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { apiFetch } from "../../../lib/api";
 
 export default function CreateAccountPage() {
   const router = useRouter();
@@ -21,22 +22,14 @@ export default function CreateAccountPage() {
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/auth/register`, {
+      await apiFetch("/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           email,
           password,
         }),
+        redirectOnUnauthorized: false,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Account creation failed");
-      }
 
       router.push("/auth/login");
     } catch (err: any) {

@@ -8,6 +8,7 @@ import { apiFetch } from "../../lib/api";
 
 type Mode = "general" | "weekly_plan" | "application_strategy" | "interview_prep" | "profile_gaps";
 type Message = { role: "user" | "assistant"; content: string; interactionId?: number; feedback?: boolean };
+type CoachAction = { id: number; title: string; status: "pending" | "completed" | "skipped"; outcome?: string | null };
 
 const actions: { mode: Mode; title: string; prompt: string; description: string }[] = [
   { mode: "weekly_plan", title: "Plan my week", prompt: "Create my highest-impact career plan for the next seven days.", description: "A realistic, prioritized action plan" },
@@ -23,7 +24,18 @@ export default function CoachPage() {
   const [loading, setLoading] = useState(false);
   const [completeness, setCompleteness] = useState<number | null>(null);
   const [context, setContext] = useState<string[]>([]);
+  const [coachActions, setCoachActions] = useState<CoachAction[]>([]);
   const messageViewportRef = useRef<HTMLDivElement>(null);
+
+  async function loadActions() {
+    try {
+      setCoachActions(await apiFetch<CoachAction[]>("/coach/actions"));
+    } catch {
+      setCoachActions([]);
+    }
+  }
+
+  useEffect(() => { loadActions(); }, []);
 
   useEffect(() => {
     const viewport = messageViewportRef.current;
@@ -45,6 +57,7 @@ export default function CoachPage() {
       });
       setMessages([...history, { role: "assistant", content: result.answer, interactionId: result.interaction_id }]);
       setCompleteness(result.profile_completeness); setContext(result.context_used);
+      if (selectedMode === "weekly_plan") await loadActions();
     } catch (e: any) {
       setMessages([...history, { role: "assistant", content: `I couldn’t generate advice: ${e.message}` }]);
     } finally { setLoading(false); }
@@ -64,11 +77,29 @@ export default function CoachPage() {
     }
   }
 
+  async function toggleAction(action: CoachAction) {
+    const status = action.status === "completed" ? "pending" : "completed";
+    const updated = await apiFetch<CoachAction>(`/coach/actions/${action.id}`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    });
+    setCoachActions((items) => items.map((item) => item.id === updated.id ? updated : item));
+  }
+
+  async function saveOutcome(action: CoachAction, outcome: string) {
+    const updated = await apiFetch<CoachAction>(`/coach/actions/${action.id}`, {
+      method: "PUT",
+      body: JSON.stringify({ outcome }),
+    });
+    setCoachActions((items) => items.map((item) => item.id === updated.id ? updated : item));
+  }
+
   return <main className="app-page text-slate-950"><div className="app-container"><AppNavbar />
     <div className="mb-8"><p className="eyebrow">Personalized guidance</p><h1 className="mt-3 text-4xl font-black tracking-[-0.04em] sm:text-5xl">Meet your <span className="gradient-text">Career Coach.</span></h1><p className="mt-3 max-w-2xl text-slate-600">Turn your profile and real job-search activity into clear, practical next steps.</p></div>
     <div className="grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
       <aside className="space-y-4 lg:sticky lg:top-28">
         <div className="surface-card rounded-3xl p-4 sm:p-5"><div className="flex items-center justify-between"><h2 className="font-black">Choose a focus</h2><span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-violet-600">AI powered</span></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">{actions.map((action, index) => <button key={action.mode} onClick={() => send(action.prompt, action.mode)} disabled={loading} className="group flex w-full items-start gap-3 rounded-2xl border border-slate-200 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50/70 hover:shadow-md"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xs font-black text-slate-500 transition group-hover:bg-violet-600 group-hover:text-white">0{index + 1}</span><span><span className="block font-bold">{action.title}</span><span className="mt-1 block text-xs leading-5 text-slate-500">{action.description}</span></span></button>)}</div></div>
+        {coachActions.length > 0 && <div className="surface-card rounded-3xl p-5"><div className="flex items-center justify-between"><h2 className="font-black">This week</h2><span className="text-xs font-bold text-slate-400">{coachActions.filter((item) => item.status === "completed").length}/{coachActions.length}</span></div><div className="mt-3 space-y-2">{coachActions.slice(0, 5).map((action) => <div key={action.id} className="rounded-xl p-2 hover:bg-violet-50"><button type="button" onClick={() => toggleAction(action)} className="flex w-full items-start gap-2 text-left text-xs"><span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${action.status === "completed" ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300"}`}>{action.status === "completed" ? "✓" : ""}</span><span className={action.status === "completed" ? "text-slate-400 line-through" : "text-slate-700"}>{action.title}</span></button>{action.status === "completed" && <input defaultValue={action.outcome || ""} onBlur={(event) => saveOutcome(action, event.target.value)} placeholder="What happened? Add an outcome" className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-600 outline-none focus:border-violet-400" />}</div>)}</div></div>}
         <div className="rounded-3xl bg-gradient-to-br from-violet-600 to-blue-600 p-5 text-white"><h2 className="font-black">Coach context</h2>{completeness === null ? <p className="mt-2 text-sm text-blue-100">Start a conversation to see what the coach uses.</p> : <><p className="mt-2 text-sm text-blue-100">Profile completeness: {completeness}%</p><p className="mt-2 text-xs text-blue-100">Using: {context.join(", ")}</p></>}<Link href="/profile" className="mt-4 inline-block rounded-xl bg-white/15 px-4 py-2 text-sm font-bold">Update profile</Link></div>
       </aside>
       <section className="surface-card flex h-[72dvh] min-h-[420px] min-w-0 flex-col overflow-hidden rounded-3xl sm:min-h-[520px] lg:h-[calc(100dvh-15rem)] lg:max-h-[780px]">

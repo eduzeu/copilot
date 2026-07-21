@@ -1,13 +1,14 @@
 import json
-from typing import Optional
+from typing import Optional, Type
 
 from google import genai
-from google.genai import errors
+from google.genai import errors, types
+from pydantic import BaseModel, ValidationError
 
 from app.core.config import settings
 
 
-MODEL = "gemini-2.5-flash"
+MODEL = settings.ai_model
 
 
 class LLMRateLimitError(RuntimeError):
@@ -32,7 +33,10 @@ def call_llm(
 
     if not settings.ai_key:
         raise RuntimeError("AI_KEY is not configured")
-    client = genai.Client(api_key=settings.ai_key)
+    client = genai.Client(
+        api_key=settings.ai_key,
+        http_options=types.HttpOptions(timeout=settings.ai_timeout_seconds * 1000),
+    )
     config = {
         "max_output_tokens": max_tokens,
         "temperature": 0.3,
@@ -61,6 +65,8 @@ def call_llm(
         raise LLMProviderError("The AI provider rejected the request. Please try again.") from exc
     except errors.ServerError as exc:
         raise LLMProviderError("The AI provider is temporarily unavailable. Please try again shortly.") from exc
+    except TimeoutError as exc:
+        raise LLMProviderError("The AI provider took too long to respond. Please try again.") from exc
 
     if not response.text:
         raise LLMProviderError("The AI provider returned an empty response. Please try again.")
@@ -71,6 +77,7 @@ def call_llm_json(
     prompt: str,
     system_prompt: Optional[str] = None,
     max_tokens: int = 1024,
+    schema: Type[BaseModel] | None = None,
 ):
     raw = call_llm(
         prompt,
@@ -87,4 +94,9 @@ def call_llm_json(
         raise RuntimeError("AI returned an incomplete response. Please try again.") from exc
     if not isinstance(result, dict):
         raise RuntimeError("AI returned an unexpected response. Please try again.")
+    if schema is not None:
+        try:
+            return schema.model_validate(result).model_dump()
+        except ValidationError as exc:
+            raise RuntimeError("AI returned an invalid structured response. Please try again.") from exc
     return result

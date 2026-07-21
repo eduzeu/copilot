@@ -22,24 +22,9 @@ export default function DashboardPage() {
   const [profileCompleteness, setProfileCompleteness] = useState<number | null>(null);
   const [error, setError] = useState("");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
   async function fetchApplications() {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/applications/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "Failed to load dashboard");
-      }
-
+      const data = await apiFetch<Application[]>("/applications/");
       setApplications(data);
     } catch (err: any) {
       setError(err.message);

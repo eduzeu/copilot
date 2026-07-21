@@ -53,11 +53,32 @@ Rules:
 
         return questions[:count]
 
-    except Exception as e:
+    except Exception:
+        fallback = {
+            "behavioral": [
+                "Tell me about a difficult problem you solved and how you measured success.",
+                "Describe a disagreement with a teammate and how you resolved it.",
+                "Tell me about a project that did not go as planned and what you changed.",
+                "Describe a time you learned a technical skill under a deadline.",
+                "What accomplishment best demonstrates your readiness for this role?",
+            ],
+            "system_design": [
+                "How would you clarify requirements before designing a scalable notification service?",
+                "How would you design an API rate limiter and explain its tradeoffs?",
+                "How would you store and retrieve large volumes of application events?",
+                "How would you identify and remove a performance bottleneck in a web service?",
+                "How would you make a service resilient to a downstream dependency failure?",
+            ],
+            "technical": [
+                "How would you find duplicate values in a large dataset and discuss the complexity?",
+                "When would you choose breadth-first search over depth-first search?",
+                "How would you test an API endpoint that depends on a database?",
+                "How would you diagnose a request that succeeds locally but times out in production?",
+                "Explain a project decision where you traded simplicity for scalability.",
+            ],
+        }
+        pool = fallback.get(question_type, fallback["technical"] + fallback["behavioral"])
         return [
-            {
-                "question_type": question_type,
-                "question_text": "Failed to generate interview questions. Please try again.",
-                "reason": str(e),
-            }
+            {"question_type": question_type, "question_text": question, "reason": "Offline fallback"}
+            for question in (pool * ((count // len(pool)) + 1))[:count]
         ]

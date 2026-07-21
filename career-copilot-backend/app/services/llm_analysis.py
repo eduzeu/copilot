@@ -1,10 +1,70 @@
 import json 
+from typing import Literal
+
+from pydantic import BaseModel, Field, model_validator
 from app.services.llm_service import call_llm_json
 
 SYSTEM_PROMPT = '''
 You are a master resume coach and ATS (Applicant Tracking System) optimization expert. 
 Provide constructive, actionable feedback and always respond with valid JSON only.
 '''
+
+
+class ResumeFeedbackPayload(BaseModel):
+    is_resume: bool
+    quality_score: int | None = Field(default=None, ge=0, le=100)
+    feedback: str
+    rewrite_ats: str | None = None
+    rewrite_strong: str | None = None
+    suggestions: list[str] = Field(default_factory=list)
+    quantification_suggestions: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def non_resume_has_no_score(self):
+        if not self.is_resume:
+            self.quality_score = None
+            self.rewrite_ats = None
+            self.rewrite_strong = None
+            self.suggestions = []
+            self.quantification_suggestions = []
+        return self
+
+
+class BulletPayload(BaseModel):
+    quality_score: int = Field(ge=0, le=100)
+    feedback: str
+    rewrite_ats: str
+    rewrite_strong: str
+    suggestions: list[str] = Field(default_factory=list)
+    quantification_suggestions: list[str] = Field(default_factory=list)
+
+
+class BulletMatchPayload(BaseModel):
+    relevance_score: int = Field(ge=0, le=100)
+    feedback: str
+    rewrite_ats: str
+    rewrite_strong: str
+    missing_keywords: list[str] = Field(default_factory=list)
+
+
+class JobMatchPayload(BaseModel):
+    is_resume: bool
+    overall_score: int | None = Field(default=None, ge=0, le=100)
+    summary: str
+    strengths: list[str] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
+    missing_keywords: list[str] = Field(default_factory=list)
+    recommendation: Literal["Strong Match", "Good Match", "Partial Match", "Weak Match"] | None = None
+
+    @model_validator(mode="after")
+    def non_resume_has_no_score(self):
+        if not self.is_resume:
+            self.overall_score = None
+            self.strengths = []
+            self.gaps = []
+            self.missing_keywords = []
+            self.recommendation = None
+        return self
 
 def analyze_resume_general(resume_text: str) -> dict:
     """
@@ -31,7 +91,7 @@ If the document is not a resume or CV, set is_resume to false, explain what the
 document appears to be in feedback, set quality_score to null, set both rewrite
 fields to null, and return empty lists. Do not score a non-resume document."""
 
-    raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, max_tokens=2048)
+    raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, max_tokens=2048, schema=ResumeFeedbackPayload)
     return {
         "is_resume": bool(raw.get("is_resume", True)),
         "quality_score": raw.get("quality_score"),
@@ -71,7 +131,7 @@ def analyze_bullet_general(bullet: str) -> dict:
             }}"""
 
     try: 
-        raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT)
+        raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, schema=BulletPayload)
         result = raw
 
         return {
@@ -128,7 +188,7 @@ def analyze_bullet_with_llm(bullet: str, job_description: str) -> dict:
 '''
     
     try: 
-        raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT)
+        raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, schema=BulletMatchPayload)
         result = raw
         return {
             "relevance_score": result.get("relevance_score"),
@@ -184,12 +244,12 @@ the document appears to be in summary, set overall_score to null, return empty
 lists, and set recommendation to null. Do not calculate a match score."""
 
     try:
-        raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, max_tokens=1024)
+        raw = call_llm_json(prompt, system_prompt=SYSTEM_PROMPT, max_tokens=1024, schema=JobMatchPayload)
         result = raw
 
         return {
             "is_resume": bool(result.get("is_resume", True)),
-            "overall_score": int(result.get("overall_score") or 0),
+            "overall_score": result.get("overall_score"),
             "summary": result.get("summary", ""),
             "strengths": result.get("strengths", []),
             "gaps": result.get("gaps", []),

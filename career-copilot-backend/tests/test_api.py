@@ -1,5 +1,25 @@
 def test_health(client):
     assert client.get("/health").json() == {"status": "ok"}
+    assert client.get("/health/live").status_code == 200
+    ready = client.get("/health/ready")
+    assert ready.status_code == 200
+    assert ready.json()["database"] == "up"
+
+
+def test_cookie_login_and_logout(client):
+    client.post("/auth/register", json={"email": "cookie@example.com", "password": "password123"})
+    logged_in = client.post("/auth/login", json={"email": "cookie@example.com", "password": "password123"})
+    assert logged_in.status_code == 200
+    assert logged_in.cookies.get("career_copilot_session")
+    assert client.get("/users/me").status_code == 200
+    assert client.post("/auth/logout").status_code == 204
+    assert client.get("/users/me").status_code == 401
+
+
+def test_invalid_login_is_generic(client):
+    response = client.post("/auth/login", json={"email": "missing@example.com", "password": "wrong"})
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid email or password"
 
 
 def test_user_routes_require_authentication(client):
@@ -29,6 +49,23 @@ def test_application_crud_is_reflected_in_dashboard(client, auth_headers):
 
     deleted = client.delete(f"/applications/{created.json()['id']}", headers=auth_headers)
     assert deleted.status_code == 204
+
+
+def test_users_cannot_access_each_others_applications(client):
+    client.post("/auth/register", json={"email": "first@example.com", "password": "password123"})
+    first_login = client.post("/auth/login", json={"email": "first@example.com", "password": "password123"})
+    first = {"Authorization": f"Bearer {first_login.json()['access_token']}"}
+    created = client.post(
+        "/applications/",
+        headers=first,
+        json={"company": "Private", "role_title": "Engineer", "location": "NYC", "date_applied": "2026-07-21", "status": "applied"},
+    ).json()
+
+    client.post("/auth/register", json={"email": "second@example.com", "password": "password123"})
+    second_login = client.post("/auth/login", json={"email": "second@example.com", "password": "password123"})
+    second = {"Authorization": f"Bearer {second_login.json()['access_token']}"}
+    assert client.get(f"/applications/{created['id']}", headers=second).status_code == 404
+    assert client.delete(f"/applications/{created['id']}", headers=second).status_code == 404
 
 
 def test_ai_routes_require_authentication(client):
@@ -102,6 +139,68 @@ def test_non_resume_analysis_is_flagged_without_a_score(monkeypatch):
     result = analyze_resume_general("financial aid letter contents")
     assert result["is_resume"] is False
     assert result["quality_score"] is None
+
+
+def test_non_resume_job_match_has_no_zero_score(monkeypatch):
+    from app.services.llm_analysis import score_resume_against_jd
+
+    monkeypatch.setattr(
+        "app.services.llm_analysis.call_llm_json",
+        lambda *args, **kwargs: {
+            "is_resume": False,
+            "overall_score": None,
+            "summary": "This is not a resume.",
+            "strengths": [],
+            "gaps": [],
+            "missing_keywords": [],
+            "recommendation": None,
+        },
+    )
+    result = score_resume_against_jd("award letter", "software engineer role")
+    assert result["is_resume"] is False
+    assert result["overall_score"] is None
+    assert result["recommendation"] is None
+
+
+def test_ai_analysis_is_cached(client, auth_headers, monkeypatch):
+    calls = {"count": 0}
+
+    def fake_score(*args):
+        calls["count"] += 1
+        return {"is_resume": True, "overall_score": 80, "summary": "Good", "strengths": [], "gaps": [], "missing_keywords": [], "recommendation": "Good Match"}
+
+    monkeypatch.setattr("app.api.routes.analysis.score_resume_against_jd", fake_score)
+    params = {"resume_text": "A" * 60, "job_description": "B" * 60}
+    first = client.post("/analysis/score", headers=auth_headers, params=params)
+    second = client.post("/analysis/score", headers=auth_headers, params=params)
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["cached"] is False
+    assert second.json()["cached"] is True
+    assert calls["count"] == 1
+
+
+def test_weekly_plan_creates_trackable_actions(client, auth_headers, monkeypatch):
+    monkeypatch.setattr(
+        "app.services.coach_service.call_llm",
+        lambda *args, **kwargs: "## Plan\n- Submit three targeted applications.\n- Complete two DSA sessions.\n\n## Best next move\nStart the first application.",
+    )
+    response = client.post(
+        "/coach/chat",
+        headers=auth_headers,
+        json={"message": "Plan my week", "mode": "weekly_plan"},
+    )
+    assert response.status_code == 200, response.text
+    actions = client.get("/coach/actions", headers=auth_headers).json()
+    assert len(actions) == 2
+    updated = client.put(
+        f"/coach/actions/{actions[0]['id']}",
+        headers=auth_headers,
+        json={"status": "completed", "outcome": "Submitted and received a recruiter reply."},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["status"] == "completed"
+    assert "recruiter reply" in updated.json()["outcome"]
 
 
 def test_coach_quota_error_returns_429(client, auth_headers, monkeypatch):
