@@ -31,6 +31,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  body::before {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(15, 23, 42, .08) .65px, transparent .65px);
+    background-size: 18px 18px;
+    mask-image: linear-gradient(to bottom, black, transparent 65%);
+    content: "";
+  }
+
   button,
   input,
   textarea,
@@ -72,6 +83,62 @@
     background: rgba(255, 255, 255, 0.84);
     box-shadow: 0 18px 50px -30px rgba(15, 23, 42, 0.35);
     backdrop-filter: blur(18px);
+  }
+
+  .surface-card-strong {
+    border: 1px solid rgba(226, 232, 240, .95);
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 28px 80px -40px rgba(15, 23, 42, .5);
+    backdrop-filter: blur(22px);
+  }
+
+  .navbar-scrolled {
+    border-color: rgba(255, 255, 255, .48);
+    background: rgba(255, 255, 255, .52);
+    box-shadow: 0 16px 45px -28px rgba(15, 23, 42, .48);
+    backdrop-filter: blur(16px) saturate(145%);
+    -webkit-backdrop-filter: blur(16px) saturate(145%);
+  }
+
+  .button-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    border-radius: 999px;
+    background: #0f172a;
+    padding: .9rem 1.35rem;
+    color: white;
+    font-weight: 800;
+    box-shadow: 0 15px 30px -15px rgba(15, 23, 42, .7);
+    transition: transform .2s, box-shadow .2s, background .2s;
+  }
+
+  .button-primary:hover {
+    transform: translateY(-2px);
+    background: #1e293b;
+    box-shadow: 0 20px 35px -15px rgba(15, 23, 42, .75);
+  }
+
+  .button-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .85);
+    padding: .9rem 1.35rem;
+    color: #334155;
+    font-weight: 800;
+    box-shadow: 0 10px 25px -20px rgba(15, 23, 42, .5);
+    transition: transform .2s, border-color .2s, color .2s;
+  }
+
+  .button-secondary:hover {
+    transform: translateY(-2px);
+    border-color: #c4b5fd;
+    color: #6d28d9;
   }
 
   .eyebrow {

@@ -121,6 +121,22 @@ def test_coach_chat_uses_profile_without_requiring_a_resume(client, auth_headers
     assert feedback.json()["helpful"] is True
 
 
+def test_coach_uses_offline_fallback_when_ai_key_is_missing(client, auth_headers, monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "ai_key", "")
+    response = client.post(
+        "/coach/chat",
+        headers=auth_headers,
+        json={"message": "Plan my week", "mode": "weekly_plan"},
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["fallback"] is True
+    assert "AI_KEY is not configured" not in response.json()["answer"]
+    assert "Best next move" in response.json()["answer"]
+
+
 def test_non_resume_analysis_is_flagged_without_a_score(monkeypatch):
     from app.services.llm_analysis import analyze_resume_general
 

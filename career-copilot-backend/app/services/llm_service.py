@@ -32,7 +32,7 @@ def call_llm(
         full_prompt = f"{system_prompt}\n\n{prompt}"
 
     if not settings.ai_key:
-        raise RuntimeError("AI_KEY is not configured")
+        raise LLMProviderError("The AI provider is not configured.")
     client = genai.Client(
         api_key=settings.ai_key,
         http_options=types.HttpOptions(timeout=settings.ai_timeout_seconds * 1000),
