@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     max_upload_bytes: int = 10 * 1024 * 1024
 
+    # Observability
+    metrics_enabled: bool = False
+    dd_agent_host: str = "127.0.0.1"
+    dd_dogstatsd_port: int = 8125
+    dd_service: str = "career-copilot-backend"
+    dd_env: str = "development"
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
     @property

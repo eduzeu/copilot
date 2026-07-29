@@ -8,6 +8,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.metrics import increment
 from app.models.ai_control import AIRequestLog, AIResponseCache
 
 
@@ -30,6 +31,7 @@ def enforce_daily_quota(db: Session, user_id: int, feature: str) -> None:
 def record_ai_request(db: Session, user_id: int, feature: str, status: str = "completed") -> None:
     db.add(AIRequestLog(user_id=user_id, feature=feature, status=status))
     db.commit()
+    increment("ai.requests", tags=[f"feature:{feature}", f"status:{status}"])
 
 
 def run_cached_json(
@@ -52,8 +54,10 @@ def run_cached_json(
         .first()
     )
     if cached:
+        increment("ai.cache", tags=[f"feature:{feature}", "result:hit"])
         return {**cached.response, "cached": True}
 
+    increment("ai.cache", tags=[f"feature:{feature}", "result:miss"])
     enforce_daily_quota(db, user_id, feature)
     try:
         result = operation(*args)

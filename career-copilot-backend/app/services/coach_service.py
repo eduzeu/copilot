@@ -15,6 +15,7 @@ from app.services.coach_learning import STRATEGY_INSTRUCTIONS, choose_strategy, 
 from app.models.coach_action import CoachAction
 from app.services.ai_control import enforce_daily_quota, record_ai_request
 from app.services.llm_service import LLMProviderError, LLMRateLimitError
+from app.core.metrics import increment
 
 
 def create_coach_session(
@@ -160,6 +161,14 @@ User: {req.message}
         answer = _fallback_coaching_answer(req.mode, pipeline_counts, calculate_completeness(profile))
     interaction = record_interaction(
         db, user_id, req.mode, strategy, req.message, answer
+    )
+    increment(
+        "coach.interactions",
+        tags=[
+            f"mode:{req.mode}",
+            f"strategy:{strategy}",
+            f"fallback:{str(fallback).lower()}",
+        ],
     )
     if req.mode == "weekly_plan":
         _store_actions_from_answer(db, user_id, interaction.id, answer)

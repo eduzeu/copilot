@@ -31,6 +31,11 @@ services:
       DD_AGENT_HOST: datadog-agent
       DD_SERVICE: career-copilot-backend
       DD_ENV: ${APP_ENV:-development}
+      DD_VERSION: ${APP_VERSION:-0.1.0}
+      DD_RUNTIME_METRICS_ENABLED: "true"
+      DD_LOGS_INJECTION: "true"
+      DD_DOGSTATSD_PORT: "8125"
+      METRICS_ENABLED: ${METRICS_ENABLED:-false}
     ports:
       - "8000:8000"
     depends_on:
@@ -64,9 +69,16 @@ services:
       DD_APM_ENABLED: "true"
       DD_APM_NON_LOCAL_TRAFFIC: "true"
       DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
+      DD_DOGSTATSD_METRICS_STATS_ENABLE: "true"
+      DD_PROCESS_CONFIG_PROCESS_COLLECTION_ENABLED: "true"
+      DD_CONTAINER_EXCLUDE: "name:datadog-agent"
     ports:
       - "8126:8126"
       - "8125:8125/udp"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
 
 volumes:
   pgdata:

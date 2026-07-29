@@ -343,17 +343,20 @@ GitHub Actions runs both checks and validates a fresh Alembic migration on every
 pull request. The human-reviewed AI rubric is stored in
 `career-copilot-backend/evals/evaluation_cases.json`.
 
-## Datadog APM
+## Datadog observability
 
 The backend includes `ddtrace` instrumentation for FastAPI requests, SQLAlchemy queries,
-errors, and runtime metrics.
+errors, and runtime metrics. It also sends privacy-safe product counters through DogStatsD
+for AI usage, cache performance, coaching behavior, and application-pipeline activity.
+Metrics never include user IDs, email addresses, company names, résumé text, or prompts.
 
 After creating a Datadog API key:
 
 ```powershell
 $env:DD_API_KEY="your-datadog-api-key"
 $env:DD_SITE="datadoghq.com"
-docker compose --profile observability up -d datadog-agent
+$env:METRICS_ENABLED="true"
+docker compose --profile observability up --build -d db datadog-agent backend frontend
 ```
 
 For a manually started backend:
@@ -365,10 +368,30 @@ $env:DD_ENV="development"
 $env:DD_AGENT_HOST="127.0.0.1"
 $env:DD_RUNTIME_METRICS_ENABLED="true"
 $env:DD_LOGS_INJECTION="true"
+$env:METRICS_ENABLED="true"
 ddtrace-run python -m uvicorn app.main:app --reload
 ```
 
 The API key belongs only in the Agent environment and must never be committed.
+
+### Custom metrics
+
+| Metric | Tags | What it shows |
+| --- | --- | --- |
+| `career_copilot.ai.requests` | `feature`, `status` | Completed, failed, and fallback AI requests |
+| `career_copilot.ai.cache` | `feature`, `result` | Cache hits and misses by AI feature |
+| `career_copilot.coach.interactions` | `mode`, `strategy`, `fallback` | Coach usage and offline fallback rate |
+| `career_copilot.applications.events` | `action`, `status` | Created, updated, and deleted application events |
+| `career_copilot.applications.status_changes` | `from`, `to` | Movement through the application funnel |
+
+Recommended dashboard widgets:
+
+1. APM request throughput, p95 latency, and error rate for `career-copilot-backend`.
+2. AI requests by `feature` and `status`.
+3. AI cache hit rate using `career_copilot.ai.cache`.
+4. Coach interactions grouped by `mode` and `fallback`.
+5. Application status transitions grouped by `from` and `to`.
+6. PostgreSQL query latency and container CPU/memory from the Agent.
 
 ## Production checklist
 
